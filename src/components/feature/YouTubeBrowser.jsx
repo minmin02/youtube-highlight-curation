@@ -129,9 +129,13 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
           </div>
           <span className="text-lg font-semibold text-gray-900">YouTube</span>
         </div>
-        <div className="text-xs text-gray-500">
+        <button
+          onClick={() => window.open('https://www.youtube.com/', '_blank', 'noopener,noreferrer')}
+          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+        >
           사이트 내 탐색
-        </div>
+          <i className="ri-external-link-line"></i>
+        </button>
       </div>
 
       {/* 검색 바 */}
