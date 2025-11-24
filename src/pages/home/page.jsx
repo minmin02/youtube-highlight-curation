@@ -127,95 +127,127 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* 2열 레이아웃: 플레이리스트 | YouTube 브라우저 + 기능들 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 왼쪽: 플레이리스트 목록 (정렬 가능) */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      내 플레이리스트
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={playlistSortBy}
-                        onChange={(e) => setPlaylistSortBy(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="rating">평점순</option>
-                        <option value="date">날짜순</option>
-                        <option value="name">이름순</option>
-                      </select>
-                    </div>
+            {/* 왼쪽: 플레이리스트 목록 - 개선된 버전 */}
+<div className="lg:col-span-1">
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <i className="ri-folder-music-line text-purple-600"></i>
+        내 플레이리스트
+        <span className="text-sm   font-normal text-gray-500">({playlists.length}개)</span>
+      </h3>
+      <select
+        value={playlistSortBy}
+        onChange={(e) => setPlaylistSortBy(e.target.value)}
+        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+      >
+        <option value="rating">평점순</option>
+        <option value="date">날짜순</option>
+        <option value="name">이름순</option>
+      </select>
+    </div>
+    
+    {playlists.length > 0 ? (
+      <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+        {playlists
+          .sort((a, b) => {
+            switch (playlistSortBy) {
+              case 'rating':
+                return (b.rating || 0) - (a.rating || 0);
+              case 'date':
+                return new Date(b.createdAt) - new Date(a.createdAt);
+              case 'name':
+                return a.name.localeCompare(b.name);
+              default:
+                return 0;
+            }
+          })
+          .map((playlist) => (
+            <div
+              key={playlist.id}
+              onClick={() => {
+                setCurrentPlaylist(playlist);
+                if (playlist.tags.length > 0) {
+                  const firstTag = playlist.tags[0];
+                  if (firstTag.videoId) {
+                    setVideoId(firstTag.videoId);
+                  }
+                }
+              }}
+              className="group p-4 rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all duration-300"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-gray-900 text-base mb-1 truncate group-hover:text-purple-700 transition-colors">
+                    {playlist.name}
+                  </h4>
+                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <i className="ri-music-2-line"></i>
+                      {playlist.tags.length}개 트랙
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <i className="ri-calendar-line"></i>
+                      {new Date(playlist.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                    </span>
                   </div>
-                  
-                  {playlists.length > 0 ? (
-                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                      {playlists
-                        .sort((a, b) => {
-                          switch (playlistSortBy) {
-                            case 'rating':
-                              return (b.rating || 0) - (a.rating || 0);
-                            case 'date':
-                              return new Date(b.createdAt) - new Date(a.createdAt);
-                            case 'name':
-                              return a.name.localeCompare(b.name);
-                            default:
-                              return 0;
-                          }
-                        })
-                        .map((playlist) => (
-                          <div
-                            key={playlist.id}
-                            onClick={() => {
-                              setCurrentPlaylist(playlist);
-                              // 플레이리스트의 첫 번째 태그의 영상으로 이동
-                              if (playlist.tags.length > 0) {
-                                const firstTag = playlist.tags[0];
-                                if (firstTag.videoId) {
-                                  setVideoId(firstTag.videoId);
-                                }
-                              }
-                            }}
-                            className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
-                                {playlist.name}
-                              </h4>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs text-gray-600">
-                                {playlist.tags.length}개 태그
-                              </p>
-                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <button
-                                    key={star}
-                                    type="button"
-                                    onClick={() => updatePlaylistRating(playlist.id, star)}
-                                    className={`text-sm transition-colors ${
-                                      star <= (playlist.rating || 0)
-                                        ? 'text-yellow-400 hover:text-yellow-500'
-                                        : 'text-gray-300 hover:text-gray-400'
-                                    }`}
-                                  >
-                                    <i className="ri-star-fill"></i>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <i className="ri-play-list-line text-4xl mb-2"></i>
-                      <p className="text-sm">플레이리스트가 없습니다</p>
-                    </div>
-                  )}
                 </div>
               </div>
+
+              {/* 별점 */}
+              <div className="flex items-center gap-1 mb-3" onClick={(e) => e.stopPropagation()}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => updatePlaylistRating(playlist.id, star)}
+                    className={`text-base transition-colors ${
+                      star <= (playlist.rating || 0)
+                        ? 'text-yellow-400 hover:text-yellow-500'
+                        : 'text-gray-300 hover:text-gray-400'
+                    }`}
+                  >
+                    <i className="ri-star-fill"></i>
+                  </button>
+                ))}
+                {(playlist.rating || 0) > 0 && (
+                  <span className="text-xs text-gray-500 ml-1">({playlist.rating})</span>
+                )}
+              </div>
+
+              {/* 미리보기 썸네일 */}
+              <div className="flex gap-2">
+                {playlist.tags.slice(0, 3).map((tag, idx) => {
+                  const mins = Math.floor(tag.timestamp / 60);
+                  const secs = tag.timestamp % 60;
+                  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+                  
+                  return (
+                    <div
+                      key={idx}
+                      className="flex-1 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600 font-mono group-hover:from-purple-50 group-hover:to-blue-50 transition-colors"
+                    >
+                      {timeStr}
+                    </div>
+                  );
+                })}
+                {playlist.tags.length > 3 && (
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center text-xs font-bold text-purple-700">
+                    +{playlist.tags.length - 3}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+      </div>
+    ) : (
+      <div className="text-center py-12 text-gray-500">
+        <i className="ri-play-list-line text-5xl mb-3 text-gray-300"></i>
+        <p className="text-sm font-medium">플레이리스트가 없습니다</p>
+        <p className="text-xs mt-1">영상을 불러와서 플레이리스트를 만들어보세요!</p>
+      </div>
+    )}
+  </div>
 
               {/* 가운데: YouTube 브라우저 */}
               <div className="lg:col-span-1">
