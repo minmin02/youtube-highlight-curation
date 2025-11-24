@@ -50,6 +50,7 @@ const useVideoStore = create((set, get) => ({
       id: Date.now().toString(),
       name,
       tags: selectedTags,
+      rating: 0,
       createdAt: new Date().toISOString()
     };
     
@@ -58,6 +59,18 @@ const useVideoStore = create((set, get) => ({
     }));
     
     return playlist;
+  },
+  
+  // 플레이리스트 평점 업데이트
+  updatePlaylistRating: (playlistId, rating) => {
+    set((state) => ({
+      playlists: state.playlists.map(playlist =>
+        playlist.id === playlistId ? { ...playlist, rating } : playlist
+      ),
+      currentPlaylist: state.currentPlaylist?.id === playlistId 
+        ? { ...state.currentPlaylist, rating }
+        : state.currentPlaylist
+    }));
   },
   
   setCurrentPlaylist: (playlist) => set({ 
