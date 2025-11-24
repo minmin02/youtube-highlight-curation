@@ -6,6 +6,7 @@ import { VideoPlayer } from '../../components/feature/VideoPlayer';
 import { TagList } from '../../components/feature/TagList';
 import { PlaylistManager } from '../../components/feature/PlaylistManager';
 import { AuthModal } from '../../components/feature/AuthModal';
+import YouTubeBrowser from '../../components/feature/YouTubeBrowser';
 import { Button } from '../../components/base/Button';
 import { Input } from '../../components/base/Input';
 import { extractVideoId } from '../../utils/urlUtils';
@@ -14,7 +15,8 @@ export default function HomePage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { currentVideoId, setVideoId } = useVideoStore();
+  const [playlistSortBy, setPlaylistSortBy] = useState('rating'); // 'rating', 'date', 'name'
+  const { currentVideoId, setVideoId, playlists, setCurrentPlaylist, updatePlaylistRating } = useVideoStore();
   const { user, loading, initAuth, logout } = useAuthStore();
 
   useEffect(() => {
@@ -59,7 +61,10 @@ export default function HomePage() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
+            <div 
+              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setVideoId('')}
+            >
               <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
                 <i className="ri-play-line text-white text-lg"></i>
               </div>
@@ -90,10 +95,10 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!currentVideoId ? (
           /* 시작 화면 */
-          <div className="max-w-2xl mx-auto">
+          <div className="space-y-8">
             {/* 로그인 안내 */}
             {!user && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
                   <i className="ri-information-line text-blue-600 text-xl flex-shrink-0 mt-0.5"></i>
                   <div>
@@ -122,68 +127,172 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">시작하기</h3>
-              
-              <div className="space-y-4">
-                <Input
-                  label="YouTube URL"
-                  value={videoUrl}
-                  onChange={handleUrlChange}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  error={urlError}
-                />
-                
-                <Button 
-                  onClick={handleVideoSubmit}
-                  className="w-full"
-                  size="lg"
-                >
-                  <i className="ri-play-line mr-2"></i>
-                  영상 불러오기
-                </Button>
+            {/* 2열 레이아웃: 플레이리스트 | YouTube 브라우저 + 기능들 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 왼쪽: 플레이리스트 목록 (정렬 가능) */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      내 플레이리스트
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={playlistSortBy}
+                        onChange={(e) => setPlaylistSortBy(e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="rating">평점순</option>
+                        <option value="date">날짜순</option>
+                        <option value="name">이름순</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {playlists.length > 0 ? (
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                      {playlists
+                        .sort((a, b) => {
+                          switch (playlistSortBy) {
+                            case 'rating':
+                              return (b.rating || 0) - (a.rating || 0);
+                            case 'date':
+                              return new Date(b.createdAt) - new Date(a.createdAt);
+                            case 'name':
+                              return a.name.localeCompare(b.name);
+                            default:
+                              return 0;
+                          }
+                        })
+                        .map((playlist) => (
+                          <div
+                            key={playlist.id}
+                            onClick={() => {
+                              setCurrentPlaylist(playlist);
+                              // 플레이리스트의 첫 번째 태그의 영상으로 이동
+                              if (playlist.tags.length > 0) {
+                                const firstTag = playlist.tags[0];
+                                if (firstTag.videoId) {
+                                  setVideoId(firstTag.videoId);
+                                }
+                              }
+                            }}
+                            className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
+                                {playlist.name}
+                              </h4>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs text-gray-600">
+                                {playlist.tags.length}개 태그
+                              </p>
+                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => updatePlaylistRating(playlist.id, star)}
+                                    className={`text-sm transition-colors ${
+                                      star <= (playlist.rating || 0)
+                                        ? 'text-yellow-400 hover:text-yellow-500'
+                                        : 'text-gray-300 hover:text-gray-400'
+                                    }`}
+                                  >
+                                    <i className="ri-star-fill"></i>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <i className="ri-play-list-line text-4xl mb-2"></i>
+                      <p className="text-sm">플레이리스트가 없습니다</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h4 className="font-medium text-gray-900 mb-3">주요 기능</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i className="ri-bookmark-line text-blue-600"></i>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-gray-900">태그 추가</h5>
-                      <p className="text-sm text-gray-600">원하는 순간에 태그와 메모 추가</p>
-                    </div>
-                  </div>
+              {/* 가운데: YouTube 브라우저 */}
+              <div className="lg:col-span-1">
+                <div style={{ height: '600px' }}>
+                  <YouTubeBrowser 
+                    onVideoSelect={(videoId) => {
+                      setVideoId(videoId);
+                    }}
+                  />
+                </div>
+                
+                {/* 아래: 영상 불러오기 */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">영상 불러오기</h3>
                   
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i className="ri-list-check-line text-green-600"></i>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-gray-900">플레이리스트</h5>
-                      <p className="text-sm text-gray-600">하이라이트 구간 자동 재생</p>
-                    </div>
+                  <div className="space-y-4">
+                    <Input
+                      label="YouTube URL"
+                      value={videoUrl}
+                      onChange={handleUrlChange}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      error={urlError}
+                    />
+                    
+                    <Button 
+                      onClick={handleVideoSubmit}
+                      className="w-full"
+                      size="lg"
+                    >
+                      <i className="ri-play-line mr-2"></i>
+                      영상 불러오기
+                    </Button>
                   </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i className="ri-share-line text-purple-600"></i>
+                </div>
+
+                {/* 주요 기능 */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">주요 기능</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-bookmark-line text-blue-600"></i>
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-gray-900 text-sm">태그 추가</h5>
+                        <p className="text-xs text-gray-600">원하는 순간에 태그와 메모 추가</p>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="font-medium text-gray-900">링크 공유</h5>
-                      <p className="text-sm text-gray-600">다른 사람과 플레이리스트 공유</p>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-list-check-line text-green-600"></i>
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-gray-900 text-sm">플레이리스트</h5>
+                        <p className="text-xs text-gray-600">하이라이트 구간 자동 재생</p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <i className="ri-edit-line text-orange-600"></i>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-share-line text-purple-600"></i>
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-gray-900 text-sm">링크 공유</h5>
+                        <p className="text-xs text-gray-600">다른 사람과 플레이리스트 공유</p>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="font-medium text-gray-900">태그 관리</h5>
-                      <p className="text-sm text-gray-600">태그 수정, 삭제, 정렬</p>
+                    
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="ri-star-line text-orange-600"></i>
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-gray-900 text-sm">평점 시스템</h5>
+                        <p className="text-xs text-gray-600">플레이리스트에 평점 부여</p>
+                      </div>
                     </div>
                   </div>
                 </div>

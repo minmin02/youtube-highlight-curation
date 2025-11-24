@@ -11,6 +11,7 @@ const PlaylistManager = () => {
     createPlaylist,
     setCurrentPlaylist,
     updatePlaylist,
+    updatePlaylistRating,
     addTagsFromVideo,
     setCurrentVideo
   } = useVideoStore();
@@ -31,6 +32,7 @@ const PlaylistManager = () => {
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [showEditForm, setShowEditForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [sortBy, setSortBy] = useState('rating'); // 'rating', 'date', 'name'
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -156,6 +158,52 @@ const PlaylistManager = () => {
     setSelectedTags([]);
     setShowEditForm(false);
     alert(`${selectedTagObjects.length}개의 태그가 추가되었습니다.`);
+  };
+
+  // Rating 컴포넌트
+  const RatingStars = ({ rating, onRatingChange, size = 'md' }) => {
+    const sizeClasses = {
+      sm: 'text-sm',
+      md: 'text-lg',
+      lg: 'text-xl'
+    };
+
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onRatingChange && onRatingChange(star)}
+            className={`${sizeClasses[size]} transition-colors ${
+              star <= rating
+                ? 'text-yellow-400 hover:text-yellow-500'
+                : 'text-gray-300 hover:text-gray-400'
+            }`}
+          >
+            <i className="ri-star-fill"></i>
+          </button>
+        ))}
+        {rating > 0 && (
+          <span className="text-xs text-gray-500 ml-1">({rating})</span>
+        )}
+      </div>
+    );
+  };
+
+  // 플레이리스트 정렬
+  const getSortedPlaylists = () => {
+    const sorted = [...playlists];
+    switch (sortBy) {
+      case 'rating':
+        return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      case 'date':
+        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'name':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      default:
+        return sorted;
+    }
   };
 
   const generateShareUrl = () => {
@@ -373,9 +421,18 @@ const PlaylistManager = () => {
       {currentPlaylist && (
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              현재 플레이리스트: {currentPlaylist.name}
-            </h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                현재 플레이리스트: {currentPlaylist.name}
+              </h3>
+              <div className="mt-2">
+                <RatingStars
+                  rating={currentPlaylist.rating || 0}
+                  onRatingChange={(rating) => updatePlaylistRating(currentPlaylist.id, rating)}
+                  size="md"
+                />
+              </div>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={handleAddTagsToPlaylist}
@@ -512,11 +569,26 @@ const PlaylistManager = () => {
       {/* 저장된 플레이리스트 목록 */}
       {playlists.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">
-            저장된 플레이리스트 ({playlists.length}개)
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">
+              저장된 플레이리스트 ({playlists.length}개)
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">정렬:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="rating">평점순</option>
+                <option value="date">날짜순</option>
+                <option value="name">이름순</option>
+              </select>
+            </div>
+          </div>
           <div className="space-y-2">
-            {playlists.map((playlist) => (
+            {getSortedPlaylists().map((playlist) => (
               <div
                 key={playlist.id}
                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -527,16 +599,25 @@ const PlaylistManager = () => {
                 onClick={() => setCurrentPlaylist(playlist)}
               >
                 <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-medium text-gray-800">{playlist.name}</h4>
-                    <p className="text-sm text-gray-600">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-gray-800">{playlist.name}</h4>
+                      {currentPlaylist?.id === playlist.id && (
+                        <i className="ri-check-line text-blue-600"></i>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">
                       {playlist.tags.length}개 태그 • {' '}
                       {new Date(playlist.createdAt).toLocaleDateString()}
                     </p>
+                    <RatingStars
+                      rating={playlist.rating || 0}
+                      onRatingChange={(rating) => {
+                        updatePlaylistRating(playlist.id, rating);
+                      }}
+                      size="sm"
+                    />
                   </div>
-                  {currentPlaylist?.id === playlist.id && (
-                    <i className="ri-check-line text-blue-600"></i>
-                  )}
                 </div>
               </div>
             ))}
