@@ -98,7 +98,7 @@ export default function HomePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!currentVideoId ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
 
             {/* 왼쪽: 플레이리스트 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
