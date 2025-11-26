@@ -174,7 +174,7 @@ export default function HomePage() {
                               key={star}
                               type="button"
                               onClick={() => updatePlaylistRating(playlist.id, star)}
-                              className={`text-base transition-colors ${
+                              className={`no-theme text-base transition-colors ${
                                 star <= (playlist.rating || 0)
                                   ? 'text-yellow-400 hover:text-yellow-500'
                                   : 'text-gray-300 hover:text-gray-400'

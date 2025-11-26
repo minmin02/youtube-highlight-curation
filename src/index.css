@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* »ç¿ëÀÚ Å×¸¶ ¼³Á¤ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 .theme-red {
   --bg-color: #ffffff;
   --accent-color: #e53935;
@@ -61,50 +61,50 @@
 }
 
 
-/* ÀüÃ¼ ¹è°æ¿¡ Å×¸¶ Àû¿ë */
+/* ï¿½ï¿½Ã¼ ï¿½ï¿½æ¿¡ ï¿½×¸ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 body {
   background-color: var(--bg-color);
   transition: background-color 0.3s ease;
 }
 
-/* ¹öÆ° »ö»ó ¹Ù²Ù±â */
+/* ë²„íŠ¼ ìƒ‰ìƒ ë°”ê¾¸ê¸° - no-theme í´ë˜ìŠ¤ê°€ ì—†ëŠ” ë²„íŠ¼ì—ë§Œ í…Œë§ˆ ì ìš© */
 button {
   transition: background-color 0.3s ease;
 }
 
-.theme-red button {
+.theme-red button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-blue button {
+.theme-blue button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-yellow button {
+.theme-yellow button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-pink button {
+.theme-pink button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-green button {
+.theme-green button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-lavender button {
+.theme-lavender button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-lightpink button {
+.theme-lightpink button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-black button {
+.theme-black button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-brown button {
+.theme-brown button:not(.no-theme) {
   background-color: var(--accent-color);
 }
-.theme-orange button {
+.theme-orange button:not(.no-theme) {
   background-color: var(--accent-color);
 }
 
 
-/* »ó´Ü ·Î°í ¹è°æ»ö ¹Ù²Ù±â */
+/* ï¿½ï¿½ï¿½ ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù²Ù±ï¿½ */
 .logo {
   background-color: var(--accent-color);
 }

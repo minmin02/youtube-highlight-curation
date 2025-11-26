@@ -11,6 +11,8 @@ const PlaylistManager = () => {
     setCurrentPlaylist,
     updatePlaylist,
     updatePlaylistRating,
+    deletePlaylist,
+    renamePlaylist,
     addTagsFromVideo,
     setCurrentVideo
   } = useVideoStore();
@@ -27,6 +29,7 @@ const PlaylistManager = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [playlistName, setPlaylistName] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [newPlaylistRating, setNewPlaylistRating] = useState(0);
   const [showAddVideoForm, setShowAddVideoForm] = useState(false);
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [showEditForm, setShowEditForm] = useState(false);
@@ -52,10 +55,11 @@ const PlaylistManager = () => {
     }
 
     const selectedTagObjects = tags.filter(tag => selectedTags.includes(tag.id));
-    const playlist = createPlaylist(playlistName.trim(), selectedTagObjects);
+    const playlist = createPlaylist(playlistName.trim(), selectedTagObjects, newPlaylistRating);
     
     setPlaylistName('');
     setSelectedTags([]);
+    setNewPlaylistRating(0);
     setShowCreateForm(false);
     setCurrentPlaylist(playlist);
   };
@@ -174,7 +178,7 @@ const PlaylistManager = () => {
             key={star}
             type="button"
             onClick={() => onRatingChange && onRatingChange(star)}
-            className={`${sizeClasses[size]} transition-colors ${
+            className={`no-theme ${sizeClasses[size]} transition-colors ${
               star <= rating
                 ? 'text-yellow-400 hover:text-yellow-500'
                 : 'text-gray-300 hover:text-gray-400'
@@ -337,6 +341,30 @@ const PlaylistManager = () => {
                 </div>
               ))}
             </div>
+
+            {/* 별점 선택 */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-blue-800">별점 (선택사항):</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewPlaylistRating(star === newPlaylistRating ? 0 : star)}
+                    className={`no-theme text-xl transition-colors ${
+                      star <= newPlaylistRating
+                        ? 'text-yellow-400 hover:text-yellow-500'
+                        : 'text-gray-300 hover:text-gray-400'
+                    }`}
+                  >
+                    <i className="ri-star-fill"></i>
+                  </button>
+                ))}
+                {newPlaylistRating > 0 && (
+                  <span className="text-sm text-gray-600 ml-2">({newPlaylistRating}점)</span>
+                )}
+              </div>
+            </div>
             
             <div className="flex gap-2">
               <button
@@ -350,6 +378,7 @@ const PlaylistManager = () => {
                   setShowCreateForm(false);
                   setPlaylistName('');
                   setSelectedTags([]);
+                  setNewPlaylistRating(0);
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap cursor-pointer"
               >
@@ -545,7 +574,7 @@ const PlaylistManager = () => {
                           e.stopPropagation();
                           handleEditPlaylistTag(index);
                         }}
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        className="no-theme p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                         title="편집"
                       >
                         <i className="ri-edit-line text-lg"></i>
@@ -555,7 +584,7 @@ const PlaylistManager = () => {
                           e.stopPropagation();
                           handleRemoveFromPlaylist(index);
                         }}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        className="no-theme p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         title="제거"
                       >
                         <i className="ri-delete-bin-line text-lg"></i>
@@ -632,24 +661,53 @@ const PlaylistManager = () => {
               <div
                 key={playlist.id}
                 onClick={() => setCurrentPlaylist(playlist)}
-                className={`relative overflow-hidden rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                className={`group relative overflow-hidden rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                   currentPlaylist?.id === playlist.id
                     ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-400 shadow-lg scale-105'
                     : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md'
                 }`}
               >
+                {/* 수정/삭제 버튼 */}
+                <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newName = prompt('플레이리스트 이름을 입력하세요:', playlist.name);
+                      if (newName && newName.trim() && newName.trim() !== playlist.name) {
+                        renamePlaylist(playlist.id, newName.trim());
+                      }
+                    }}
+                    className="no-theme w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+                    title="이름 수정"
+                  >
+                    <i className="ri-edit-line text-sm"></i>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`"${playlist.name}" 플레이리스트를 삭제하시겠습니까?`)) {
+                        deletePlaylist(playlist.id);
+                      }
+                    }}
+                    className="no-theme w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
+                    title="삭제"
+                  >
+                    <i className="ri-delete-bin-line text-sm"></i>
+                  </button>
+                </div>
+
                 {/* 선택 표시 */}
                 {currentPlaylist?.id === playlist.id && (
-                  <div className="absolute top-3 right-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <i className="ri-check-line text-white font-bold"></i>
+                  <div className="absolute top-3 left-3">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <i className="ri-check-line text-white text-sm font-bold"></i>
                     </div>
                   </div>
                 )}
                 
                 <div className="p-5">
                   {/* 플레이리스트 이름 */}
-                  <h4 className="font-bold text-gray-800 text-lg mb-2 pr-10">
+                  <h4 className="font-bold text-gray-800 text-lg mb-2 pr-16">
                     {playlist.name}
                   </h4>
                   

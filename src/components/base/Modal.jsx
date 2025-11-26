@@ -48,7 +48,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
                 <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="no-theme w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   <i className="ri-close-line text-lg"></i>
                 </button>
