@@ -721,19 +721,18 @@ const PlaylistManager = () => {
                       </button>
                     </div>
 
-                    {/* 선택 표시 */}
-                    {currentPlaylist?.id === playlist.id && (
-                      <div className="absolute top-3 left-3">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                          <i className="ri-check-line text-white text-sm font-bold"></i>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="p-5">
-                      <h4 className="font-bold text-gray-800 text-lg mb-2 pr-16">
-                        {playlist.name}
-                      </h4>
+                      <div className="flex items-start gap-3">
+                        {/* 선택 표시 */}
+                        {currentPlaylist?.id === playlist.id && (
+                          <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
+                            <i className="ri-check-line text-white text-sm font-bold"></i>
+                          </div>
+                        )}
+                        <h4 className={`font-bold text-gray-800 text-lg mb-2 pr-16 ${currentPlaylist?.id === playlist.id ? '' : 'pl-0'}`}>
+                          {playlist.name}
+                        </h4>
+                      </div>
 
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                         <span className="flex items-center gap-1">
