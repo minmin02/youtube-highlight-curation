@@ -45,12 +45,12 @@ const useVideoStore = create((set, get) => ({
     tags: state.tags.filter(tag => tag.id !== tagId)
   })),
   
-  createPlaylist: (name, selectedTags) => {
+  createPlaylist: (name, selectedTags, rating = 0) => {
     const playlist = {
       id: Date.now().toString(),
       name,
       tags: selectedTags,
-      rating: 0,
+      rating,
       createdAt: new Date().toISOString()
     };
     
@@ -107,6 +107,24 @@ const useVideoStore = create((set, get) => ({
     ),
     currentPlaylist: state.currentPlaylist?.id === playlistId 
       ? { ...state.currentPlaylist, ...updates }
+      : state.currentPlaylist
+  })),
+  
+  // 플레이리스트 삭제
+  deletePlaylist: (playlistId) => set((state) => ({
+    playlists: state.playlists.filter(playlist => playlist.id !== playlistId),
+    currentPlaylist: state.currentPlaylist?.id === playlistId 
+      ? null 
+      : state.currentPlaylist
+  })),
+  
+  // 플레이리스트 이름 변경
+  renamePlaylist: (playlistId, newName) => set((state) => ({
+    playlists: state.playlists.map(playlist =>
+      playlist.id === playlistId ? { ...playlist, name: newName } : playlist
+    ),
+    currentPlaylist: state.currentPlaylist?.id === playlistId 
+      ? { ...state.currentPlaylist, name: newName }
       : state.currentPlaylist
   }))
 }));

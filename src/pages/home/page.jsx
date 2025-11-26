@@ -10,12 +10,13 @@ import YouTubeBrowser from '../../components/feature/YouTubeBrowser';
 import { Button } from '../../components/base/Button';
 import { Input } from '../../components/base/Input';
 import { extractVideoId } from '../../utils/urlUtils';
+import ThemeDropdown from '../../components/ThemeDropdown';
 
 export default function HomePage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [playlistSortBy, setPlaylistSortBy] = useState('rating'); // 'rating', 'date', 'name'
+  const [playlistSortBy, setPlaylistSortBy] = useState('rating');
   const { currentVideoId, setVideoId, playlists, setCurrentPlaylist, updatePlaylistRating } = useVideoStore();
   const { user, loading, initAuth, logout } = useAuthStore();
 
@@ -46,7 +47,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-color)] flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">로딩 중...</p>
@@ -56,9 +57,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-[var(--bg-color)] transition-colors duration-300">
+
+      <header className="bg-[var(--bg-color)] shadow-sm border-b border-gray-200 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div 
@@ -68,15 +69,14 @@ export default function HomePage() {
               <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
                 <i className="ri-play-line text-white text-lg"></i>
               </div>
-              <h1 className="text-xl font-bold text-gray-900">ReACT</h1>
-              <span className="text-sm text-gray-500">YouTube 하이라이트 큐레이션</span>
+              <h1 className="text-xl font-bold text-[var(--text-color)]">ReACT</h1>
+              <span className="text-sm text-[var(--text-color)]">YouTube 하이라이트 큐레이션</span>
             </div>
-            
-            {/* 로그인/회원가입 버튼 */}
+
             <div className="flex items-center space-x-3">
               {user ? (
                 <>
-                  <span className="text-sm text-gray-600">{user.email}</span>
+                  <span className="text-sm text-[var(--text-color)]">{user.email}</span>
                   <Button variant="ghost" size="sm" onClick={logout}>
                     로그아웃
                   </Button>
@@ -92,226 +92,176 @@ export default function HomePage() {
         </div>
       </header>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 mb-4">
+        <ThemeDropdown />
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!currentVideoId ? (
-          /* 시작 화면 */
-          <div className="space-y-8">
-            {/* 로그인 안내 */}
-            {!user && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <i className="ri-information-line text-blue-600 text-xl flex-shrink-0 mt-0.5"></i>
-                  <div>
-                    <h3 className="font-medium text-blue-900 mb-1">로그인하고 시작하세요</h3>
-                    <p className="text-sm text-blue-700 mb-2">
-                      회원가입하면 태그와 플레이리스트를 저장할 수 있어요
-                    </p>
-                    <Button size="sm" onClick={() => setShowAuthModal(true)}>
-                      로그인 / 회원가입
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="grid grid-cols-1 gap-8">
 
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i className="ri-youtube-line text-3xl text-red-600"></i>
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                YouTube 하이라이트 큐레이션
-              </h2>
-              <p className="text-lg text-gray-600 mb-8">
-                YouTube 영상에 타임스탬프 기반 태그를 추가하고<br />
-                나만의 하이라이트 플레이리스트를 만들어보세요
-              </p>
-            </div>
+            {/* 왼쪽: 플레이리스트 */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <i className="ri-folder-music-line text-purple-600"></i>
+                  내 플레이리스트
+                  <span className="text-sm font-normal text-gray-500">({playlists.length}개)</span>
+                </h3>
 
-            {/* 2열 레이아웃: 플레이리스트 | YouTube 브라우저 + 기능들 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 왼쪽: 플레이리스트 목록 (정렬 가능) */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      내 플레이리스트
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={playlistSortBy}
-                        onChange={(e) => setPlaylistSortBy(e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="rating">평점순</option>
-                        <option value="date">날짜순</option>
-                        <option value="name">이름순</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  {playlists.length > 0 ? (
-                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                      {playlists
-                        .sort((a, b) => {
-                          switch (playlistSortBy) {
-                            case 'rating':
-                              return (b.rating || 0) - (a.rating || 0);
-                            case 'date':
-                              return new Date(b.createdAt) - new Date(a.createdAt);
-                            case 'name':
-                              return a.name.localeCompare(b.name);
-                            default:
-                              return 0;
+                <select
+                  value={playlistSortBy}
+                  onChange={(e) => setPlaylistSortBy(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="rating">평점순</option>
+                  <option value="date">날짜순</option>
+                  <option value="name">이름순</option>
+                </select>
+              </div>
+
+              {playlists.length > 0 ? (
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                  {playlists
+                    .sort((a, b) => {
+                      switch (playlistSortBy) {
+                        case 'rating':
+                          return (b.rating || 0) - (a.rating || 0);
+                        case 'date':
+                          return new Date(b.createdAt) - new Date(a.createdAt);
+                        case 'name':
+                          return a.name.localeCompare(b.name);
+                        default:
+                          return 0;
+                      }
+                    })
+                    .map((playlist) => (
+                      <div
+                        key={playlist.id}
+                        onClick={() => {
+                          setCurrentPlaylist(playlist);
+                          if (playlist.tags.length > 0) {
+                            const firstTag = playlist.tags[0];
+                            if (firstTag.videoId) {
+                              setVideoId(firstTag.videoId);
+                            }
                           }
-                        })
-                        .map((playlist) => (
-                          <div
-                            key={playlist.id}
-                            onClick={() => {
-                              setCurrentPlaylist(playlist);
-                              // 플레이리스트의 첫 번째 태그의 영상으로 이동
-                              if (playlist.tags.length > 0) {
-                                const firstTag = playlist.tags[0];
-                                if (firstTag.videoId) {
-                                  setVideoId(firstTag.videoId);
-                                }
-                              }
-                            }}
-                            className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
-                                {playlist.name}
-                              </h4>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs text-gray-600">
-                                {playlist.tags.length}개 태그
-                              </p>
-                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <button
-                                    key={star}
-                                    type="button"
-                                    onClick={() => updatePlaylistRating(playlist.id, star)}
-                                    className={`text-sm transition-colors ${
-                                      star <= (playlist.rating || 0)
-                                        ? 'text-yellow-400 hover:text-yellow-500'
-                                        : 'text-gray-300 hover:text-gray-400'
-                                    }`}
-                                  >
-                                    <i className="ri-star-fill"></i>
-                                  </button>
-                                ))}
-                              </div>
+                        }}
+                        className="group p-4 rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all duration-300"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 text-base mb-1 truncate group-hover:text-purple-700 transition-colors">
+                              {playlist.name}
+                            </h4>
+                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <i className="ri-music-2-line"></i>
+                                {playlist.tags.length}개 트랙
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <i className="ri-calendar-line"></i>
+                                {new Date(playlist.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                              </span>
                             </div>
                           </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <i className="ri-play-list-line text-4xl mb-2"></i>
-                      <p className="text-sm">플레이리스트가 없습니다</p>
-                    </div>
-                  )}
+                        </div>
+
+                        {/* 별점 */}
+                        <div className="flex items-center gap-1 mb-3" onClick={(e) => e.stopPropagation()}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => updatePlaylistRating(playlist.id, star)}
+                              className={`no-theme text-base transition-colors ${
+                                star <= (playlist.rating || 0)
+                                  ? 'text-yellow-400 hover:text-yellow-500'
+                                  : 'text-gray-300 hover:text-gray-400'
+                              }`}
+                            >
+                              <i className="ri-star-fill"></i>
+                            </button>
+                          ))}
+                          {(playlist.rating || 0) > 0 && (
+                            <span className="text-xs text-gray-500 ml-1">({playlist.rating})</span>
+                          )}
+                        </div>
+
+                        {/* 태그 미리보기 */}
+                        <div className="flex gap-2">
+                          {playlist.tags.slice(0, 3).map((tag, idx) => {
+                            const mins = Math.floor(tag.timestamp / 60);
+                            const secs = tag.timestamp % 60;
+                            const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex-1 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600 font-mono group-hover:from-purple-50 group-hover:to-blue-50 transition-colors"
+                              >
+                                {timeStr}
+                              </div>
+                            );
+                          })}
+                          {playlist.tags.length > 3 && (
+                            <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center text-xs font-bold text-purple-700">
+                              +{playlist.tags.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                 </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <i className="ri-play-list-line text-5xl mb-3 text-gray-300"></i>
+                  <p className="text-sm font-medium">플레이리스트가 없습니다</p>
+                  <p className="text-xs mt-1">영상을 불러와서 플레이리스트를 만들어보세요!</p>
+                </div>
+              )}
+            </div>
+
+            {/* 오른쪽: 유튜브 브라우저 + URL 입력 */}
+            <div>
+              <div style={{ height: '600px' }}>
+                <YouTubeBrowser 
+                  onVideoSelect={(videoId) => setVideoId(videoId)}
+                />
               </div>
 
-              {/* 가운데: YouTube 브라우저 */}
-              <div className="lg:col-span-1">
-                <div style={{ height: '600px' }}>
-                  <YouTubeBrowser 
-                    onVideoSelect={(videoId) => {
-                      setVideoId(videoId);
-                    }}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">영상 불러오기</h3>
+                <div className="space-y-4">
+                  <Input
+                    label="YouTube URL"
+                    value={videoUrl}
+                    onChange={handleUrlChange}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    error={urlError}
                   />
-                </div>
-                
-                {/* 아래: 영상 불러오기 */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">영상 불러오기</h3>
                   
-                  <div className="space-y-4">
-                    <Input
-                      label="YouTube URL"
-                      value={videoUrl}
-                      onChange={handleUrlChange}
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      error={urlError}
-                    />
-                    
-                    <Button 
-                      onClick={handleVideoSubmit}
-                      className="w-full"
-                      size="lg"
-                    >
-                      <i className="ri-play-line mr-2"></i>
-                      영상 불러오기
-                    </Button>
-                  </div>
-                </div>
-
-                {/* 주요 기능 */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">주요 기능</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i className="ri-bookmark-line text-blue-600"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-medium text-gray-900 text-sm">태그 추가</h5>
-                        <p className="text-xs text-gray-600">원하는 순간에 태그와 메모 추가</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i className="ri-list-check-line text-green-600"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-medium text-gray-900 text-sm">플레이리스트</h5>
-                        <p className="text-xs text-gray-600">하이라이트 구간 자동 재생</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i className="ri-share-line text-purple-600"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-medium text-gray-900 text-sm">링크 공유</h5>
-                        <p className="text-xs text-gray-600">다른 사람과 플레이리스트 공유</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i className="ri-star-line text-orange-600"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-medium text-gray-900 text-sm">평점 시스템</h5>
-                        <p className="text-xs text-gray-600">플레이리스트에 평점 부여</p>
-                      </div>
-                    </div>
-                  </div>
+                  <Button 
+                    onClick={handleVideoSubmit}
+                    className="w-full bg-[var(--accent-color)] text-white hover:opacity-90 active:scale-95 transition"
+                    size="lg"
+                  >
+                    <i className="ri-play-line mr-2"></i>
+                    영상 불러오기
+                  </Button>
                 </div>
               </div>
             </div>
+
           </div>
         ) : (
-          /* 메인 작업 화면 */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* 왼쪽: 비디오 플레이어 */}
+            {/* 왼쪽: 영상 플레이어 */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">YouTube 플레이어</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setVideoId('')}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setVideoId('')}>
                     <i className="ri-arrow-left-line mr-1"></i>
                     다른 영상
                   </Button>
@@ -330,10 +280,8 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
-      {/* 푸터 */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
@@ -343,6 +291,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
     </div>
   );
 }

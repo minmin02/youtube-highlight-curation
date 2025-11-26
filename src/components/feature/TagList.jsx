@@ -167,7 +167,7 @@ const TagList = () => {
                             e.stopPropagation();
                             handleEditStart(tag);
                           }}
-                          className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                          className="no-theme p-1 text-gray-500 hover:text-blue-600 transition-colors"
                           title="편집"
                         >
                           <i className="ri-edit-line text-sm"></i>
@@ -177,7 +177,7 @@ const TagList = () => {
                             e.stopPropagation();
                             handleDelete(tag.id);
                           }}
-                          className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                          className="no-theme p-1 text-gray-500 hover:text-red-600 transition-colors"
                           title="삭제"
                         >
                           <i className="ri-delete-bin-line text-sm"></i>

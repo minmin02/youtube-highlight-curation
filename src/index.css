@@ -1,3 +1,110 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ����� �׸� ���� */
+.theme-red {
+  --bg-color: #ffffff;
+  --accent-color: #e53935;
+}
+
+.theme-blue {
+  --bg-color: #e3f2fd;
+  --accent-color: #2196f3;
+}
+
+.theme-yellow {
+  --bg-color: #fffde7;
+  --accent-color: #fbc02d;
+}
+
+.theme-pink {
+  --bg-color: #fce4ec;
+  --accent-color: #ec407a;
+}
+
+.theme-green {
+  --bg-color: #e8f5e9;
+  --accent-color: #4caf50;
+}
+
+.theme-lavender {
+  --bg-color: #f5f0ff;
+  --accent-color: #b57edc;
+}
+
+.theme-lightpink {
+  --bg-color: #fff0f5;
+  --accent-color: #f8c8dc;
+}
+
+.theme-black {
+  --bg-color: #191919;
+  --accent-color: #2c2c2c;
+}
+.theme-black .theme-text {
+  color: #ffffff;
+}
+.theme-black button {
+  background-color: var(--accent-color);
+  color: rgb(229, 229, 229);
+}
+
+.theme-brown {
+  --bg-color: #bea488;
+  --accent-color: #925e36;
+}
+
+.theme-orange {
+  --bg-color: #ffbf80;
+  --accent-color: #ff810b;
+}
+
+
+/* ��ü ��濡 �׸� ���� */
+body {
+  background-color: var(--bg-color);
+  transition: background-color 0.3s ease;
+}
+
+/* 버튼 색상 바꾸기 - no-theme 클래스가 없는 버튼에만 테마 적용 */
+button {
+  transition: background-color 0.3s ease;
+}
+
+.theme-red button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-blue button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-yellow button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-pink button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-green button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-lavender button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-lightpink button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-black button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-brown button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+.theme-orange button:not(.no-theme) {
+  background-color: var(--accent-color);
+}
+
+
+/* ��� �ΰ� ���� �ٲٱ� */
+.logo {
+  background-color: var(--accent-color);
+}

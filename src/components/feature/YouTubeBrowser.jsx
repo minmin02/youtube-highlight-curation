@@ -131,7 +131,7 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         </div>
         <button
           onClick={() => window.open('https://www.youtube.com/', '_blank', 'noopener,noreferrer')}
-          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="no-theme text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
         >
           사이트 내 탐색
           <i className="ri-external-link-line"></i>
@@ -151,7 +151,7 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-full hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="no-theme px-6 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-full hover:bg-gray-200 transition-colors disabled:opacity-50"
           >
             {loading ? (
               <i className="ri-loader-4-line text-gray-600 animate-spin"></i>
@@ -166,7 +166,7 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
       <div className="flex border-b border-gray-200 bg-white">
         <button
           onClick={() => setActiveTab('trending')}
-          className={`px-6 py-3 text-sm font-medium transition-colors ${
+          className={`no-theme px-6 py-3 text-sm font-medium transition-colors ${
             activeTab === 'trending'
               ? 'text-gray-900 border-b-2 border-gray-900'
               : 'text-gray-600 hover:text-gray-900'
@@ -178,7 +178,7 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         {activeTab === 'search' && (
           <button
             onClick={() => setActiveTab('trending')}
-            className="px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="no-theme px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
             <i className="ri-arrow-left-line mr-2"></i>
             돌아가기
