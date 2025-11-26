@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import useVideoStore from '../../stores/useVideoStore';
 
@@ -125,14 +124,13 @@ const TagList = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={handleEditSave}
-                              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-7
-7 whitespace-nowrap"
+                              className="no-theme px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 whitespace-nowrap"
                             >
                               저장
                             </button>
                             <button
                               onClick={handleEditCancel}
-                              className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 whitespace-nowrap"
+                              className="no-theme px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 whitespace-nowrap"
                             >
                               취소
                             </button>

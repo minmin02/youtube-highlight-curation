@@ -39,7 +39,7 @@ export function AuthModal({ isOpen, onClose }) {
             </h2>
             <button 
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="no-theme text-gray-400 hover:text-gray-600"
             >
               <i className="ri-close-line text-2xl"></i>
             </button>
@@ -78,7 +78,7 @@ export function AuthModal({ isOpen, onClose }) {
           <div className="mt-4 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="no-theme text-sm text-blue-600 hover:text-blue-700"
             >
               {isSignUp ? '이미 계정이 있으신가요? 로그인' : '계정이 없으신가요? 회원가입'}
             </button>

@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ����� �׸� ���� */
+/* 테마 색상 정의 */
 .theme-red {
   --bg-color: #ffffff;
   --accent-color: #e53935;
@@ -61,7 +61,7 @@
 }
 
 
-/* ��ü ��濡 �׸� ���� */
+/* 전체 배경에 테마 적용 */
 body {
   background-color: var(--bg-color);
   transition: background-color 0.3s ease;
@@ -72,39 +72,12 @@ button {
   transition: background-color 0.3s ease;
 }
 
-.theme-red button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-blue button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-yellow button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-pink button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-green button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-lavender button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-lightpink button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-black button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-brown button:not(.no-theme) {
-  background-color: var(--accent-color);
-}
-.theme-orange button:not(.no-theme) {
+[class*="theme-"] button:not(.no-theme) {
   background-color: var(--accent-color);
 }
 
 
-/* ��� �ΰ� ���� �ٲٱ� */
+/* 로고 색상 바꾸기 */
 .logo {
   background-color: var(--accent-color);
 }
