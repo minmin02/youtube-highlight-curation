@@ -5,16 +5,11 @@ export const SharedPlaylistsTab = () => {
   const [sharedPlaylists, setSharedPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
-  const [ratingsData, setRatingsData] = useState({}); // { playlistId: { myRating, average, count } }
 
   const { 
     getSharedPlaylists, 
     acceptSharedPlaylist, 
-    declineSharedPlaylist,
-    rateSharedPlaylist,
-    getPlaylistRatings,
-    getMyRating,
-    calculateAverageRating
+    declineSharedPlaylist
   } = useVideoStore();
 
   // 공유받은 플레이리스트 로드
@@ -23,22 +18,6 @@ export const SharedPlaylistsTab = () => {
     try {
       const playlists = await getSharedPlaylists();
       setSharedPlaylists(playlists);
-      
-      // 수락된 플레이리스트의 평점 정보 로드
-      const acceptedPlaylists = playlists.filter(p => p.status === 'accepted');
-      const ratingsInfo = {};
-      
-      for (const playlist of acceptedPlaylists) {
-        const playlistId = playlist.playlistId || playlist.id;
-        const [allRatings, myRating] = await Promise.all([
-          getPlaylistRatings(playlistId),
-          getMyRating(playlistId)
-        ]);
-        const { average, count } = calculateAverageRating(allRatings);
-        ratingsInfo[playlistId] = { myRating, average, count };
-      }
-      
-      setRatingsData(ratingsInfo);
     } catch (error) {
       console.error('공유 플레이리스트 로드 오류:', error);
     } finally {
@@ -79,27 +58,6 @@ export const SharedPlaylistsTab = () => {
     }
   };
 
-  // 평점 핸들러
-  const handleRate = async (playlistId, rating) => {
-    try {
-      await rateSharedPlaylist(playlistId, rating);
-      
-      // 평점 정보 새로고침
-      const [allRatings, myRating] = await Promise.all([
-        getPlaylistRatings(playlistId),
-        getMyRating(playlistId)
-      ]);
-      const { average, count } = calculateAverageRating(allRatings);
-      
-      setRatingsData(prev => ({
-        ...prev,
-        [playlistId]: { myRating, average, count }
-      }));
-    } catch (error) {
-      alert(error.message || '평점 저장에 실패했습니다.');
-    }
-  };
-
   // 날짜 포맷
   const formatDate = (date) => {
     if (!date) return '';
@@ -127,29 +85,6 @@ export const SharedPlaylistsTab = () => {
       <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status] || styles.pending}`}>
         {labels[status] || status}
       </span>
-    );
-  };
-
-  // 별점 컴포넌트
-  const RatingStars = ({ rating, onRate, disabled = false }) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => !disabled && onRate(star)}
-            disabled={disabled}
-            className={`no-theme text-lg transition-colors ${
-              star <= (rating || 0)
-                ? 'text-yellow-400 hover:text-yellow-500'
-                : 'text-gray-300 hover:text-gray-400'
-            } ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
-          >
-            <i className="ri-star-fill"></i>
-          </button>
-        ))}
-      </div>
     );
   };
 
@@ -229,7 +164,7 @@ export const SharedPlaylistsTab = () => {
         </div>
       )}
 
-      {/* 수락된 공유 (평점 기능 포함) */}
+      {/* 수락된 공유 */}
       {acceptedShares.length > 0 && (
         <div>
           <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -241,62 +176,28 @@ export const SharedPlaylistsTab = () => {
           </h4>
           
           <div className="space-y-3">
-            {acceptedShares.map((shared) => {
-              const playlistId = shared.playlistId || shared.id;
-              const ratingInfo = ratingsData[playlistId] || { myRating: null, average: 0, count: 0 };
-              
-              return (
-                <div
-                  key={shared.id}
-                  className="p-4 bg-green-50 border border-green-200 rounded-xl"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h5 className="font-bold text-gray-900 mb-1">
-                        {shared.playlistName || shared.playlistData?.name}
-                      </h5>
-                      <p className="text-sm text-gray-600">
-                        <i className="ri-user-line mr-1"></i>
-                        {shared.ownerEmail}님이 공유함
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {shared.playlistData?.tags?.length || 0}개의 하이라이트 · {formatDate(shared.sharedAt)}
-                      </p>
-                    </div>
-                    <StatusBadge status={shared.status} />
+            {acceptedShares.map((shared) => (
+              <div
+                key={shared.id}
+                className="p-4 bg-green-50 border border-green-200 rounded-xl"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h5 className="font-bold text-gray-900 mb-1">
+                      {shared.playlistName || shared.playlistData?.name}
+                    </h5>
+                    <p className="text-sm text-gray-600">
+                      <i className="ri-user-line mr-1"></i>
+                      {shared.ownerEmail}님이 공유함
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {shared.playlistData?.tags?.length || 0}개의 하이라이트 · {formatDate(shared.sharedAt)}
+                    </p>
                   </div>
-                  
-                  {/* 평점 섹션 */}
-                  <div className="mt-3 pt-3 border-t border-green-200">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                      {/* 내 평점 */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600 font-medium">내 평점:</span>
-                        <RatingStars
-                          rating={ratingInfo.myRating}
-                          onRate={(rating) => handleRate(playlistId, rating)}
-                        />
-                        {ratingInfo.myRating && (
-                          <span className="text-sm text-gray-500">({ratingInfo.myRating})</span>
-                        )}
-                      </div>
-                      
-                      {/* 평균 평점 */}
-                      <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
-                        <i className="ri-bar-chart-line text-blue-500"></i>
-                        <span className="text-sm text-gray-600">평균:</span>
-                        <span className="font-bold text-blue-600">
-                          {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : '-'}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          ({ratingInfo.count}명)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <StatusBadge status={shared.status} />
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}
