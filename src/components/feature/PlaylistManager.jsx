@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useVideoStore from '../../stores/useVideoStore';
 import usePlaylistPlayer from '../../hooks/usePlaylistPlayer';
 import { SharePlaylistModal } from './SharePlaylistModal';
@@ -15,7 +15,11 @@ const PlaylistManager = () => {
     updatePlaylistRating,
     deletePlaylist,
     renamePlaylist,
-    addTagsFromVideo
+    addTagsFromVideo,
+    rateSharedPlaylist,
+    getPlaylistRatings,
+    getMyRating,
+    calculateAverageRating
   } = useVideoStore();
 
   const {
@@ -40,6 +44,55 @@ const PlaylistManager = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedPlaylistForShare, setSelectedPlaylistForShare] = useState(null);
   const [currentTab, setCurrentTab] = useState('myPlaylists');
+  
+  // 공유받은 플레이리스트 평점 정보
+  const [ratingsData, setRatingsData] = useState({}); // { playlistId: { myRating, average, count } }
+
+  // 공유받은 플레이리스트의 평점 정보 로드
+  useEffect(() => {
+    const loadRatingsForSharedPlaylists = async () => {
+      const sharedPlaylists = playlists.filter(p => p.sharedFrom);
+      const ratingsInfo = {};
+      
+      for (const playlist of sharedPlaylists) {
+        try {
+          const [allRatings, myRating] = await Promise.all([
+            getPlaylistRatings(playlist.id),
+            getMyRating(playlist.id)
+          ]);
+          const { average, count } = calculateAverageRating(allRatings);
+          ratingsInfo[playlist.id] = { myRating, average, count };
+        } catch (error) {
+          console.error('평점 로드 오류:', error);
+        }
+      }
+      
+      setRatingsData(ratingsInfo);
+    };
+    
+    loadRatingsForSharedPlaylists();
+  }, [playlists, getPlaylistRatings, getMyRating, calculateAverageRating]);
+
+  // 공유받은 플레이리스트 평점 핸들러
+  const handleSharedPlaylistRate = async (playlistId, rating) => {
+    try {
+      await rateSharedPlaylist(playlistId, rating);
+      
+      // 평점 정보 새로고침
+      const [allRatings, myRating] = await Promise.all([
+        getPlaylistRatings(playlistId),
+        getMyRating(playlistId)
+      ]);
+      const { average, count } = calculateAverageRating(allRatings);
+      
+      setRatingsData(prev => ({
+        ...prev,
+        [playlistId]: { myRating, average, count }
+      }));
+    } catch (error) {
+      console.error('평점 저장 오류:', error);
+    }
+  };
 
   // 공유 버튼 클릭 핸들러
   const handleShareClick = (playlist) => {
@@ -174,7 +227,7 @@ const PlaylistManager = () => {
     alert(`${selectedTagObjects.length}개의 태그가 추가되었습니다.`);
   };
 
-  // Rating 컴포넌트
+  // Rating 컴포넌트 (일반 플레이리스트용)
   const RatingStars = ({ rating, onRatingChange, size = 'md' }) => {
     const sizeClasses = {
       sm: 'text-sm',
@@ -201,6 +254,55 @@ const PlaylistManager = () => {
         {rating > 0 && (
           <span className="text-xs text-gray-500 ml-1">({rating})</span>
         )}
+      </div>
+    );
+  };
+
+  // 공유받은 플레이리스트용 평점 컴포넌트 (내 평점 / 평균 평점)
+  const SharedRatingStars = ({ playlistId, myRating, averageRating, ratingCount, onRatingChange, size = 'sm' }) => {
+    const sizeClasses = {
+      sm: 'text-sm',
+      md: 'text-lg',
+      lg: 'text-xl'
+    };
+
+    return (
+      <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+        {/* 내 평점 */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-600 font-medium whitespace-nowrap">내 평점:</span>
+          <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => onRatingChange && onRatingChange(star)}
+                className={`no-theme ${sizeClasses[size]} transition-colors ${
+                  star <= (myRating || 0)
+                    ? 'text-yellow-400 hover:text-yellow-500'
+                    : 'text-gray-300 hover:text-gray-400'
+                }`}
+              >
+                <i className="ri-star-fill"></i>
+              </button>
+            ))}
+            {myRating > 0 && (
+              <span className="text-xs text-gray-500 ml-1">({myRating})</span>
+            )}
+          </div>
+        </div>
+        
+        {/* 평균 평점 */}
+        <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
+          <i className="ri-bar-chart-line text-blue-500 text-xs"></i>
+          <span className="text-xs text-gray-600">평균:</span>
+          <span className="text-xs font-bold text-blue-600">
+            {averageRating > 0 ? averageRating.toFixed(1) : '-'}
+          </span>
+          <span className="text-xs text-gray-400">
+            ({ratingCount || 0}명)
+          </span>
+        </div>
       </div>
     );
   };
@@ -468,11 +570,29 @@ const PlaylistManager = () => {
                 <p className="text-gray-600 text-sm mb-2">
                   {currentPlaylist.tags.length}개의 하이라이트
                 </p>
-                <RatingStars
-                  rating={currentPlaylist.rating || 0}
-                  onRatingChange={(rating) => updatePlaylistRating(currentPlaylist.id, rating)}
-                  size="md"
-                />
+                {currentPlaylist.sharedFrom && (
+                  <p className="text-sm text-purple-600 mb-2 flex items-center gap-1">
+                    <i className="ri-share-line"></i>
+                    {currentPlaylist.sharedFrom}님에게 공유받음
+                  </p>
+                )}
+                {/* 공유받은 플레이리스트: 내 평점 / 평균 평점 */}
+                {currentPlaylist.sharedFrom ? (
+                  <SharedRatingStars
+                    playlistId={currentPlaylist.id}
+                    myRating={ratingsData[currentPlaylist.id]?.myRating || 0}
+                    averageRating={ratingsData[currentPlaylist.id]?.average || 0}
+                    ratingCount={ratingsData[currentPlaylist.id]?.count || 0}
+                    onRatingChange={(rating) => handleSharedPlaylistRate(currentPlaylist.id, rating)}
+                    size="md"
+                  />
+                ) : (
+                  <RatingStars
+                    rating={currentPlaylist.rating || 0}
+                    onRatingChange={(rating) => updatePlaylistRating(currentPlaylist.id, rating)}
+                    size="md"
+                  />
+                )}
               </div>
 
               <div className="flex gap-2">
@@ -746,13 +866,31 @@ const PlaylistManager = () => {
                       </div>
 
                       <div className="mb-3">
-                        <RatingStars
-                          rating={playlist.rating || 0}
-                          onRatingChange={(rating) => {
-                            updatePlaylistRating(playlist.id, rating);
-                          }}
-                          size="sm"
-                        />
+                        {/* 공유받은 플레이리스트: 내 평점 / 평균 평점 */}
+                        {playlist.sharedFrom ? (
+                          <div>
+                            <div className="text-xs text-purple-600 mb-2 flex items-center gap-1">
+                              <i className="ri-share-line"></i>
+                              {playlist.sharedFrom}님에게 공유받음
+                            </div>
+                            <SharedRatingStars
+                              playlistId={playlist.id}
+                              myRating={ratingsData[playlist.id]?.myRating || 0}
+                              averageRating={ratingsData[playlist.id]?.average || 0}
+                              ratingCount={ratingsData[playlist.id]?.count || 0}
+                              onRatingChange={(rating) => handleSharedPlaylistRate(playlist.id, rating)}
+                              size="sm"
+                            />
+                          </div>
+                        ) : (
+                          <RatingStars
+                            rating={playlist.rating || 0}
+                            onRatingChange={(rating) => {
+                              updatePlaylistRating(playlist.id, rating);
+                            }}
+                            size="sm"
+                          />
+                        )}
                       </div>
 
                       <div className="mt-3 flex gap-2">
