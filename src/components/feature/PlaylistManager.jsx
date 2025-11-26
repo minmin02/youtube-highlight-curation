@@ -76,10 +76,10 @@ const PlaylistManager = () => {
   // 공유받은 플레이리스트 평점 핸들러
   const handleSharedPlaylistRate = async (playlistId, rating) => {
     try {
-      await rateSharedPlaylist(playlistId, rating);
+      const result = await rateSharedPlaylist(playlistId, rating);
       
       // 평점 정보 새로고침
-      const [allRatings, myRating] = await Promise.all([
+      const [allRatings, myRatingValue] = await Promise.all([
         getPlaylistRatings(playlistId),
         getMyRating(playlistId)
       ]);
@@ -87,10 +87,14 @@ const PlaylistManager = () => {
       
       setRatingsData(prev => ({
         ...prev,
-        [playlistId]: { myRating, average, count }
+        [playlistId]: { myRating: myRatingValue, average, count }
       }));
+      
+      // 로컬 플레이리스트도 업데이트 (표시용)
+      updatePlaylistRating(playlistId, rating);
     } catch (error) {
       console.error('평점 저장 오류:', error);
+      alert(error.message || '평점 저장에 실패했습니다. 로그인이 필요할 수 있습니다.');
     }
   };
 
@@ -266,6 +270,15 @@ const PlaylistManager = () => {
       lg: 'text-xl'
     };
 
+    const handleStarClick = (e, star) => {
+      e.stopPropagation();
+      e.preventDefault();
+      console.log('별점 클릭:', star, 'playlistId:', playlistId);
+      if (onRatingChange) {
+        onRatingChange(star);
+      }
+    };
+
     return (
       <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
         {/* 내 평점 */}
@@ -276,8 +289,8 @@ const PlaylistManager = () => {
               <button
                 key={star}
                 type="button"
-                onClick={() => onRatingChange && onRatingChange(star)}
-                className={`no-theme ${sizeClasses[size]} transition-colors ${
+                onClick={(e) => handleStarClick(e, star)}
+                className={`no-theme ${sizeClasses[size]} transition-colors cursor-pointer ${
                   star <= (myRating || 0)
                     ? 'text-yellow-400 hover:text-yellow-500'
                     : 'text-gray-300 hover:text-gray-400'
@@ -749,33 +762,32 @@ const PlaylistManager = () => {
         </div>
       )}
 
-      {/* 탭 네비게이션 */}
-      {playlists.length > 0 && (
-        <div>
-          <div className="flex gap-2 mb-4 border-b border-gray-200">
-            <button
-              onClick={() => setCurrentTab('myPlaylists')}
-              className={`no-theme px-4 py-2 font-medium transition-colors ${
-                currentTab === 'myPlaylists'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <i className="ri-play-list-line mr-2"></i>
-              내 플레이리스트
-            </button>
-            <button
-              onClick={() => setCurrentTab('shared')}
-              className={`no-theme px-4 py-2 font-medium transition-colors ${
-                currentTab === 'shared'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <i className="ri-share-line mr-2"></i>
-              받은 공유
-            </button>
-          </div>
+      {/* 탭 네비게이션 - 항상 표시 */}
+      <div>
+        <div className="flex gap-2 mb-4 border-b border-gray-200">
+          <button
+            onClick={() => setCurrentTab('myPlaylists')}
+            className={`no-theme px-4 py-2 font-medium transition-colors ${
+              currentTab === 'myPlaylists'
+                ? 'text-red-600 border-b-2 border-red-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <i className="ri-play-list-line mr-2"></i>
+            내 플레이리스트
+          </button>
+          <button
+            onClick={() => setCurrentTab('shared')}
+            className={`no-theme px-4 py-2 font-medium transition-colors ${
+              currentTab === 'shared'
+                ? 'text-red-600 border-b-2 border-red-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <i className="ri-share-line mr-2"></i>
+            받은 공유
+          </button>
+        </div>
 
           {/* 조건부 렌더링: 내 플레이리스트 또는 받은 공유 */}
           {currentTab === 'myPlaylists' ? (
@@ -801,8 +813,15 @@ const PlaylistManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {getSortedPlaylists().map((playlist) => (
+              {playlists.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <i className="ri-folder-music-line text-5xl mb-3 text-gray-300"></i>
+                  <p className="font-medium">아직 플레이리스트가 없습니다</p>
+                  <p className="text-sm mt-1">태그를 추가하고 플레이리스트를 만들어보세요!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {getSortedPlaylists().map((playlist) => (
                   <div
                     key={playlist.id}
                     onClick={() => setCurrentPlaylist(playlist)}
@@ -926,13 +945,13 @@ const PlaylistManager = () => {
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              )}
             </div>
           ) : (
             <SharedPlaylistsTab />
           )}
         </div>
-      )}
 
       {tags.length === 0 && (
         <div className="text-center py-8 text-gray-500">

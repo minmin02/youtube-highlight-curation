@@ -314,6 +314,112 @@ const useVideoStore = create((set, get) => ({
       console.error('공유 취소 오류:', error);
       throw new Error('공유 취소에 실패했습니다.');
     }
+  },
+
+  // ============================================
+  // 평점 관련 함수들 (공유 플레이리스트용)
+  // ============================================
+
+  // 7. 공유 플레이리스트에 평점 부여
+  rateSharedPlaylist: async (playlistId, rating) => {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
+    try {
+      // 기존 평점이 있는지 확인
+      const ratingsRef = collection(db, 'playlistRatings');
+      const q = query(
+        ratingsRef,
+        where('playlistId', '==', playlistId),
+        where('userId', '==', user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // 기존 평점 업데이트
+        const existingDoc = querySnapshot.docs[0];
+        await updateDoc(doc(db, 'playlistRatings', existingDoc.id), {
+          rating,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        // 새 평점 추가
+        await addDoc(ratingsRef, {
+          playlistId,
+          userId: user.uid,
+          userEmail: user.email,
+          rating,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      return { success: true, message: '평점이 저장되었습니다.' };
+    } catch (error) {
+      console.error('평점 저장 오류:', error);
+      throw new Error('평점 저장에 실패했습니다.');
+    }
+  },
+
+  // 8. 플레이리스트의 모든 평점 가져오기 (평균 계산용)
+  getPlaylistRatings: async (playlistId) => {
+    try {
+      const ratingsRef = collection(db, 'playlistRatings');
+      const q = query(ratingsRef, where('playlistId', '==', playlistId));
+      const querySnapshot = await getDocs(q);
+
+      const ratings = [];
+      querySnapshot.forEach((docSnapshot) => {
+        ratings.push({
+          id: docSnapshot.id,
+          ...docSnapshot.data()
+        });
+      });
+
+      return ratings;
+    } catch (error) {
+      console.error('평점 가져오기 오류:', error);
+      return [];
+    }
+  },
+
+  // 9. 내 평점 가져오기
+  getMyRating: async (playlistId) => {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    try {
+      const ratingsRef = collection(db, 'playlistRatings');
+      const q = query(
+        ratingsRef,
+        where('playlistId', '==', playlistId),
+        where('userId', '==', user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data().rating;
+      }
+      return null;
+    } catch (error) {
+      console.error('내 평점 가져오기 오류:', error);
+      return null;
+    }
+  },
+
+  // 10. 평균 평점 계산
+  calculateAverageRating: (ratings) => {
+    if (!ratings || ratings.length === 0) return { average: 0, count: 0 };
+    
+    const sum = ratings.reduce((acc, r) => acc + (r.rating || 0), 0);
+    const average = sum / ratings.length;
+    
+    return {
+      average: Math.round(average * 10) / 10, // 소수점 1자리
+      count: ratings.length
+    };
   }
 }));
 
