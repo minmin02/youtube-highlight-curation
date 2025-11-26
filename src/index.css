@@ -38,18 +38,6 @@
   --accent-color: #f8c8dc;
 }
 
-.theme-black {
-  --bg-color: #191919;
-  --accent-color: #2c2c2c;
-}
-.theme-black .theme-text {
-  color: #ffffff;
-}
-.theme-black button {
-  background-color: var(--accent-color);
-  color: rgb(229, 229, 229);
-}
-
 .theme-brown {
   --bg-color: #bea488;
   --accent-color: #925e36;

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import YouTube from 'react-youtube';
 import useVideoStore from '../../stores/useVideoStore';
 import { Modal } from '../base/Modal';
@@ -151,9 +151,7 @@ const VideoPlayer = () => {
             />
             <button
               onClick={handleLoadVideo}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-7
-
-              transition-colors whitespace-nowrap cursor-pointer"
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer"
             >
               영상 로드
             </button>
@@ -192,9 +190,7 @@ const VideoPlayer = () => {
               <button
                 onClick={handleAddTag}
                 disabled={!player}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-7
-
-                disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap cursor-pointer"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap cursor-pointer"
               >
                 <i className="ri-add-line mr-2"></i>
                 태그 추가

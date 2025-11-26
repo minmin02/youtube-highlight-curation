@@ -10,7 +10,6 @@ const THEME_OPTIONS = [
   'green',
   'lavender',
   'lightpink',
-  'black',
   'brown',
   'orange',
 ];

@@ -237,12 +237,14 @@ const useVideoStore = create((set, get) => ({
       const sharedData = sharedDocSnap.data();
       
       // 내 플레이리스트에 추가 (로컬 state에 추가)
+      // originalPlaylistId를 저장하여 평점 공유에 사용
       const newPlaylist = {
         id: Date.now().toString(),
         ...sharedData.playlistData,
         name: sharedData.playlistData.name + ' (공유받음)',
         createdAt: new Date().toISOString(),
-        sharedFrom: sharedData.ownerEmail
+        sharedFrom: sharedData.ownerEmail,
+        originalPlaylistId: sharedData.playlistId // 원본 플레이리스트 ID 저장
       };
 
       set((state) => ({

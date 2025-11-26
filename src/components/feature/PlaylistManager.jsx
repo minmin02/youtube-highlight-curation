@@ -56,12 +56,15 @@ const PlaylistManager = () => {
       
       for (const playlist of sharedPlaylists) {
         try {
+          // 원본 플레이리스트 ID를 사용하여 평점 공유
+          const ratingKey = playlist.originalPlaylistId || playlist.id;
           const [allRatings, myRating] = await Promise.all([
-            getPlaylistRatings(playlist.id),
-            getMyRating(playlist.id)
+            getPlaylistRatings(ratingKey),
+            getMyRating(ratingKey)
           ]);
           const { average, count } = calculateAverageRating(allRatings);
-          ratingsInfo[playlist.id] = { myRating, average, count };
+          // 로컬 ID를 키로 사용하여 UI에서 찾을 수 있도록
+          ratingsInfo[playlist.id] = { myRating, average, count, originalId: ratingKey };
         } catch (error) {
           console.error('평점 로드 오류:', error);
         }
@@ -74,24 +77,26 @@ const PlaylistManager = () => {
   }, [playlists, getPlaylistRatings, getMyRating, calculateAverageRating]);
 
   // 공유받은 플레이리스트 평점 핸들러
-  const handleSharedPlaylistRate = async (playlistId, rating) => {
+  const handleSharedPlaylistRate = async (localPlaylistId, originalPlaylistId, rating) => {
     try {
-      const result = await rateSharedPlaylist(playlistId, rating);
+      // 원본 플레이리스트 ID로 평점 저장 (평점 공유를 위해)
+      const ratingKey = originalPlaylistId || localPlaylistId;
+      await rateSharedPlaylist(ratingKey, rating);
       
       // 평점 정보 새로고침
       const [allRatings, myRatingValue] = await Promise.all([
-        getPlaylistRatings(playlistId),
-        getMyRating(playlistId)
+        getPlaylistRatings(ratingKey),
+        getMyRating(ratingKey)
       ]);
       const { average, count } = calculateAverageRating(allRatings);
       
       setRatingsData(prev => ({
         ...prev,
-        [playlistId]: { myRating: myRatingValue, average, count }
+        [localPlaylistId]: { myRating: myRatingValue, average, count, originalId: ratingKey }
       }));
       
       // 로컬 플레이리스트도 업데이트 (표시용)
-      updatePlaylistRating(playlistId, rating);
+      updatePlaylistRating(localPlaylistId, rating);
     } catch (error) {
       console.error('평점 저장 오류:', error);
       alert(error.message || '평점 저장에 실패했습니다. 로그인이 필요할 수 있습니다.');
@@ -596,7 +601,7 @@ const PlaylistManager = () => {
                     myRating={ratingsData[currentPlaylist.id]?.myRating || 0}
                     averageRating={ratingsData[currentPlaylist.id]?.average || 0}
                     ratingCount={ratingsData[currentPlaylist.id]?.count || 0}
-                    onRatingChange={(rating) => handleSharedPlaylistRate(currentPlaylist.id, rating)}
+                    onRatingChange={(rating) => handleSharedPlaylistRate(currentPlaylist.id, currentPlaylist.originalPlaylistId, rating)}
                     size="md"
                   />
                 ) : (
@@ -897,7 +902,7 @@ const PlaylistManager = () => {
                               myRating={ratingsData[playlist.id]?.myRating || 0}
                               averageRating={ratingsData[playlist.id]?.average || 0}
                               ratingCount={ratingsData[playlist.id]?.count || 0}
-                              onRatingChange={(rating) => handleSharedPlaylistRate(playlist.id, rating)}
+                              onRatingChange={(rating) => handleSharedPlaylistRate(playlist.id, playlist.originalPlaylistId, rating)}
                               size="sm"
                             />
                           </div>
