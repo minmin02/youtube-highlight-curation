@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import useVideoStore from '../../stores/useVideoStore';
 import usePlaylistPlayer from '../../hooks/usePlaylistPlayer';
+import { SharePlaylistModal } from './SharePlaylistModal';
+import { SharedPlaylistsTab } from './SharedPlaylistsTab';
 
 const PlaylistManager = () => {
   const {
@@ -13,8 +15,7 @@ const PlaylistManager = () => {
     updatePlaylistRating,
     deletePlaylist,
     renamePlaylist,
-    addTagsFromVideo,
-    setCurrentVideo
+    addTagsFromVideo
   } = useVideoStore();
 
   const {
@@ -22,8 +23,7 @@ const PlaylistManager = () => {
     stopPlaylist,
     jumpToPlaylistItem,
     isPlaying,
-    currentIndex,
-    currentItem
+    currentIndex
   } = usePlaylistPlayer();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -34,7 +34,18 @@ const PlaylistManager = () => {
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [showEditForm, setShowEditForm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [sortBy, setSortBy] = useState('rating'); // 'rating', 'date', 'name'
+  const [sortBy, setSortBy] = useState('rating');
+
+  // 공유 기능을 위한 state
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedPlaylistForShare, setSelectedPlaylistForShare] = useState(null);
+  const [currentTab, setCurrentTab] = useState('myPlaylists');
+
+  // 공유 버튼 클릭 핸들러
+  const handleShareClick = (playlist) => {
+    setSelectedPlaylistForShare(playlist);
+    setShareModalOpen(true);
+  };
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -56,7 +67,7 @@ const PlaylistManager = () => {
 
     const selectedTagObjects = tags.filter(tag => selectedTags.includes(tag.id));
     const playlist = createPlaylist(playlistName.trim(), selectedTagObjects, newPlaylistRating);
-    
+
     setPlaylistName('');
     setSelectedTags([]);
     setNewPlaylistRating(0);
@@ -65,8 +76,8 @@ const PlaylistManager = () => {
   };
 
   const handleTagSelection = (tagId) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
+    setSelectedTags(prev =>
+      prev.includes(tagId)
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
@@ -81,17 +92,17 @@ const PlaylistManager = () => {
 
     try {
       const videoTitle = `영상 ${videoId}`;
-      
+
       const tagInput = prompt(
         '추가할 태그들을 입력하세요.\n형식: 제목1:시간1:메모1, 제목2:시간2:메모2\n예시: 인트로:0:시작 부분, 하이라이트:120:중요한 내용'
       );
-      
+
       if (!tagInput) return;
 
       const newTags = tagInput.split(',').map(tagStr => {
         const [title, timeStr, memo] = tagStr.trim().split(':');
         const timestamp = parseInt(timeStr) || 0;
-        
+
         return {
           title: title?.trim() || '제목 없음',
           memo: memo?.trim() || '',
@@ -119,21 +130,21 @@ const PlaylistManager = () => {
 
   const handleEditPlaylistTag = (tagIndex) => {
     if (!currentPlaylist) return;
-    
+
     const tag = currentPlaylist.tags[tagIndex];
     const newTitle = prompt('태그 제목을 수정하세요:', tag.title);
-    
+
     if (newTitle && newTitle.trim() !== tag.title) {
       const updatedTags = [...currentPlaylist.tags];
       updatedTags[tagIndex] = { ...tag, title: newTitle.trim() };
-      
+
       updatePlaylist(currentPlaylist.id, { tags: updatedTags });
     }
   };
 
   const handleRemoveFromPlaylist = (tagIndex) => {
     if (!currentPlaylist) return;
-    
+
     if (window.confirm('플레이리스트에서 이 태그를 제거하시겠습니까?')) {
       const updatedTags = currentPlaylist.tags.filter((_, index) => index !== tagIndex);
       updatePlaylist(currentPlaylist.id, { tags: updatedTags });
@@ -142,7 +153,7 @@ const PlaylistManager = () => {
 
   const handleAddTagsToPlaylist = () => {
     if (!currentPlaylist) return;
-    
+
     setSelectedTags([]);
     setShowEditForm(true);
   };
@@ -155,9 +166,9 @@ const PlaylistManager = () => {
 
     const selectedTagObjects = tags.filter(tag => selectedTags.includes(tag.id));
     const updatedTags = [...currentPlaylist.tags, ...selectedTagObjects];
-    
+
     updatePlaylist(currentPlaylist.id, { tags: updatedTags });
-    
+
     setSelectedTags([]);
     setShowEditForm(false);
     alert(`${selectedTagObjects.length}개의 태그가 추가되었습니다.`);
@@ -211,13 +222,13 @@ const PlaylistManager = () => {
 
   const generateShareUrl = () => {
     if (!currentPlaylist) return '';
-    
+
     const baseUrl = window.location.origin;
     const playlistData = encodeURIComponent(JSON.stringify({
       name: currentPlaylist.name,
       tags: currentPlaylist.tags
     }));
-    
+
     return `${baseUrl}/share?playlist=${playlistData}`;
   };
 
@@ -312,7 +323,7 @@ const PlaylistManager = () => {
               placeholder="플레이리스트 이름을 입력하세요"
               className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            
+
             <div className="space-y-3">
               <p className="text-sm font-medium text-blue-800">태그 선택:</p>
               {Object.values(tagsByVideo).map((videoGroup) => (
@@ -365,7 +376,7 @@ const PlaylistManager = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={handleCreatePlaylist}
@@ -424,7 +435,7 @@ const PlaylistManager = () => {
               </div>
             ))}
           </div>
-          
+
           <div className="flex gap-2 mt-4">
             <button
               onClick={handleAddSelectedTagsToPlaylist}
@@ -448,7 +459,6 @@ const PlaylistManager = () => {
       {/* 현재 플레이리스트 */}
       {currentPlaylist && (
         <div className="mb-6">
-          {/* 헤더 - 연한 파란색 단색 */}
           <div className="bg-blue-50 rounded-t-xl p-6 border-b-2 border-blue-100">
             <div className="flex justify-between items-center">
               <div>
@@ -464,7 +474,7 @@ const PlaylistManager = () => {
                   size="md"
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 <button
                   onClick={handleAddTagsToPlaylist}
@@ -501,7 +511,6 @@ const PlaylistManager = () => {
             </div>
           </div>
 
-          {/* 태그 리스트 - 카드 스타일로 개선 */}
           <div className="bg-white rounded-b-xl shadow-lg p-4">
             <div className="space-y-3">
               {currentPlaylist.tags.map((tag, index) => (
@@ -514,14 +523,12 @@ const PlaylistManager = () => {
                       : 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md hover:scale-102'
                   }`}
                 >
-                  {/* 진행 중 표시 */}
                   {isPlaying && currentIndex === index && (
                     <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 to-blue-400/10 animate-pulse"></div>
                   )}
-                  
+
                   <div className="relative p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                      {/* 순서 번호 */}
                       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                         isPlaying && currentIndex === index
                           ? 'bg-green-500 text-white'
@@ -532,17 +539,12 @@ const PlaylistManager = () => {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          {/* 타임스탬프 */}
                           <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-mono font-semibold">
                             {formatTime(tag.timestamp)}
                           </span>
-                          
-                          {/* 제목 */}
                           <h4 className="font-bold text-gray-800 text-lg truncate">
                             {tag.title}
                           </h4>
-                          
-                          {/* 재생 중 아이콘 */}
                           {isPlaying && currentIndex === index && (
                             <div className="flex items-center gap-1">
                               <div className="w-1 h-4 bg-green-500 rounded animate-pulse"></div>
@@ -551,14 +553,10 @@ const PlaylistManager = () => {
                             </div>
                           )}
                         </div>
-                        
-                        {/* 비디오 제목 */}
                         <p className="text-xs text-gray-500 flex items-center gap-1 mb-1">
                           <i className="ri-video-line"></i>
                           {tag.videoTitle}
                         </p>
-                        
-                        {/* 메모 */}
                         {tag.memo && (
                           <p className="text-sm text-gray-600 mt-2 p-2 bg-white rounded-lg border border-gray-100">
                             {tag.memo}
@@ -566,8 +564,7 @@ const PlaylistManager = () => {
                         )}
                       </div>
                     </div>
-                    
-                    {/* 액션 버튼들 */}
+
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => {
@@ -598,7 +595,7 @@ const PlaylistManager = () => {
         </div>
       )}
 
-      {/* 공유 모달 */}
+      {/* 링크 공유 모달 */}
       {showShareModal && currentPlaylist && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -632,128 +629,170 @@ const PlaylistManager = () => {
         </div>
       )}
 
-      {/* 저장된 플레이리스트 목록 */}
+      {/* 탭 네비게이션 */}
       {playlists.length > 0 && (
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <i className="ri-folder-music-line text-purple-600"></i>
-              저장된 플레이리스트
-              <span className="text-sm font-normal text-gray-500">({playlists.length}개)</span>
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">정렬:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <option value="rating">평점순</option>
-                <option value="date">날짜순</option>
-                <option value="name">이름순</option>
-              </select>
-            </div>
+          <div className="flex gap-2 mb-4 border-b border-gray-200">
+            <button
+              onClick={() => setCurrentTab('myPlaylists')}
+              className={`no-theme px-4 py-2 font-medium transition-colors ${
+                currentTab === 'myPlaylists'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <i className="ri-play-list-line mr-2"></i>
+              내 플레이리스트
+            </button>
+            <button
+              onClick={() => setCurrentTab('shared')}
+              className={`no-theme px-4 py-2 font-medium transition-colors ${
+                currentTab === 'shared'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <i className="ri-share-line mr-2"></i>
+              받은 공유
+            </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getSortedPlaylists().map((playlist) => (
-              <div
-                key={playlist.id}
-                onClick={() => setCurrentPlaylist(playlist)}
-                className={`group relative overflow-hidden rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                  currentPlaylist?.id === playlist.id
-                    ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-400 shadow-lg scale-105'
-                    : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md'
-                }`}
-              >
-                {/* 수정/삭제 버튼 */}
-                <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newName = prompt('플레이리스트 이름을 입력하세요:', playlist.name);
-                      if (newName && newName.trim() && newName.trim() !== playlist.name) {
-                        renamePlaylist(playlist.id, newName.trim());
-                      }
-                    }}
-                    className="no-theme w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
-                    title="이름 수정"
-                  >
-                    <i className="ri-edit-line text-sm"></i>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`"${playlist.name}" 플레이리스트를 삭제하시겠습니까?`)) {
-                        deletePlaylist(playlist.id);
-                      }
-                    }}
-                    className="no-theme w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
-                    title="삭제"
-                  >
-                    <i className="ri-delete-bin-line text-sm"></i>
-                  </button>
-                </div>
 
-                {/* 선택 표시 */}
-                {currentPlaylist?.id === playlist.id && (
-                  <div className="absolute top-3 left-3">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                      <i className="ri-check-line text-white text-sm font-bold"></i>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="p-5">
-                  {/* 플레이리스트 이름 */}
-                  <h4 className="font-bold text-gray-800 text-lg mb-2 pr-16">
-                    {playlist.name}
-                  </h4>
-                  
-                  {/* 정보 */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                    <span className="flex items-center gap-1">
-                      <i className="ri-music-2-line"></i>
-                      {playlist.tags.length}개 트랙
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <i className="ri-calendar-line"></i>
-                      {new Date(playlist.createdAt).toLocaleDateString('ko-KR')}
-                    </span>
-                  </div>
-
-                  {/* 별점 */}
-                  <div className="mb-3">
-                    <RatingStars
-                      rating={playlist.rating || 0}
-                      onRatingChange={(rating) => {
-                        updatePlaylistRating(playlist.id, rating);
-                      }}
-                      size="sm"
-                    />
-                  </div>
-                  
-                  {/* 미리보기 썸네일 */}
-                  <div className="mt-3 flex gap-2">
-                    {playlist.tags.slice(0, 3).map((tag, idx) => (
-                      <div
-                        key={idx}
-                        className="flex-1 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600 font-mono"
-                      >
-                        {formatTime(tag.timestamp)}
-                      </div>
-                    ))}
-                    {playlist.tags.length > 3 && (
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center text-xs font-bold text-purple-700">
-                        +{playlist.tags.length - 3}
-                      </div>
-                    )}
-                  </div>
+          {/* 조건부 렌더링: 내 플레이리스트 또는 받은 공유 */}
+          {currentTab === 'myPlaylists' ? (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <i className="ri-folder-music-line text-purple-600"></i>
+                  저장된 플레이리스트
+                  <span className="text-sm font-normal text-gray-500">({playlists.length}개)</span>
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">정렬:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <option value="rating">평점순</option>
+                    <option value="date">날짜순</option>
+                    <option value="name">이름순</option>
+                  </select>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {getSortedPlaylists().map((playlist) => (
+                  <div
+                    key={playlist.id}
+                    onClick={() => setCurrentPlaylist(playlist)}
+                    className={`group relative overflow-hidden rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                      currentPlaylist?.id === playlist.id
+                        ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-400 shadow-lg scale-105'
+                        : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md'
+                    }`}
+                  >
+                    {/* 수정/삭제 버튼 */}
+                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newName = prompt('플레이리스트 이름을 입력하세요:', playlist.name);
+                          if (newName && newName.trim() && newName.trim() !== playlist.name) {
+                            renamePlaylist(playlist.id, newName.trim());
+                          }
+                        }}
+                        className="no-theme w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+                        title="이름 수정"
+                      >
+                        <i className="ri-edit-line text-sm"></i>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`"${playlist.name}" 플레이리스트를 삭제하시겠습니까?`)) {
+                            deletePlaylist(playlist.id);
+                          }
+                        }}
+                        className="no-theme w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 hover:border-red-300 transition-all shadow-sm"
+                        title="삭제"
+                      >
+                        <i className="ri-delete-bin-line text-sm"></i>
+                      </button>
+                    </div>
+
+                    <div className="p-5">
+                      <div className="flex items-start gap-3">
+                        {/* 선택 표시 */}
+                        {currentPlaylist?.id === playlist.id && (
+                          <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
+                            <i className="ri-check-line text-white text-sm font-bold"></i>
+                          </div>
+                        )}
+                        <h4 className={`font-bold text-gray-800 text-lg mb-2 pr-16 ${currentPlaylist?.id === playlist.id ? '' : 'pl-0'}`}>
+                          {playlist.name}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <span className="flex items-center gap-1">
+                          <i className="ri-music-2-line"></i>
+                          {playlist.tags.length}개 트랙
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <i className="ri-calendar-line"></i>
+                          {new Date(playlist.createdAt).toLocaleDateString('ko-KR')}
+                        </span>
+                      </div>
+
+                      <div className="mb-3">
+                        <RatingStars
+                          rating={playlist.rating || 0}
+                          onRatingChange={(rating) => {
+                            updatePlaylistRating(playlist.id, rating);
+                          }}
+                          size="sm"
+                        />
+                      </div>
+
+                      <div className="mt-3 flex gap-2">
+                        {playlist.tags.slice(0, 3).map((tag, idx) => (
+                          <div
+                            key={idx}
+                            className="flex-1 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600 font-mono"
+                          >
+                            {formatTime(tag.timestamp)}
+                          </div>
+                        ))}
+                        {playlist.tags.length > 3 && (
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center text-xs font-bold text-purple-700">
+                            +{playlist.tags.length - 3}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 이메일 공유 버튼 */}
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareClick(playlist);
+                          }}
+                          className="no-theme w-full px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                          title="이메일로 공유하기"
+                        >
+                          <i className="ri-mail-send-line text-lg"></i>
+                          <span className="text-sm font-medium">이메일로 공유</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <SharedPlaylistsTab />
+          )}
         </div>
       )}
 
@@ -763,6 +802,16 @@ const PlaylistManager = () => {
           <p>플레이리스트를 만들려면 먼저 태그를 추가해주세요.</p>
         </div>
       )}
+
+      {/* 이메일 공유 모달 */}
+      <SharePlaylistModal
+        isOpen={shareModalOpen}
+        onClose={() => {
+          setShareModalOpen(false);
+          setSelectedPlaylistForShare(null);
+        }}
+        playlist={selectedPlaylistForShare}
+      />
     </div>
   );
 };
