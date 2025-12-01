@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useVideoStore from '../../stores/useVideoStore';
+import { SHARE_STATUS, SHARE_STATUS_LABELS, MESSAGES } from '../../constants';
 
 export const SharedPlaylistsTab = () => {
   const [sharedPlaylists, setSharedPlaylists] = useState([]);
@@ -12,7 +13,6 @@ export const SharedPlaylistsTab = () => {
     declineSharedPlaylist
   } = useVideoStore();
 
-  // 공유받은 플레이리스트 로드
   const loadSharedPlaylists = async () => {
     setLoading(true);
     try {
@@ -29,36 +29,33 @@ export const SharedPlaylistsTab = () => {
     loadSharedPlaylists();
   }, []);
 
-  // 수락 핸들러
   const handleAccept = async (sharedId) => {
     setActionLoading(sharedId);
     try {
       await acceptSharedPlaylist(sharedId);
-      alert('플레이리스트를 내 목록에 추가했습니다!');
+      alert(MESSAGES.PLAYLIST.ACCEPT_SUCCESS);
       loadSharedPlaylists();
     } catch (error) {
-      alert(error.message || '수락에 실패했습니다.');
+      alert(error.message || MESSAGES.PLAYLIST.ACCEPT_ERROR);
     } finally {
       setActionLoading(null);
     }
   };
 
-  // 거절 핸들러
   const handleDecline = async (sharedId) => {
-    if (!window.confirm('이 공유를 거절하시겠습니까?')) return;
-    
+    if (!window.confirm(MESSAGES.PLAYLIST.DECLINE_CONFIRM)) return;
+
     setActionLoading(sharedId);
     try {
       await declineSharedPlaylist(sharedId);
       loadSharedPlaylists();
     } catch (error) {
-      alert(error.message || '거절에 실패했습니다.');
+      alert(error.message || MESSAGES.PLAYLIST.DECLINE_ERROR);
     } finally {
       setActionLoading(null);
     }
   };
 
-  // 날짜 포맷
   const formatDate = (date) => {
     if (!date) return '';
     return new Date(date).toLocaleDateString('ko-KR', {
@@ -68,22 +65,16 @@ export const SharedPlaylistsTab = () => {
     });
   };
 
-  // 상태 배지
   const StatusBadge = ({ status }) => {
     const styles = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      accepted: 'bg-green-100 text-green-800',
-      declined: 'bg-red-100 text-red-800'
-    };
-    const labels = {
-      pending: '대기 중',
-      accepted: '수락됨',
-      declined: '거절됨'
+      [SHARE_STATUS.PENDING]: 'bg-yellow-100 text-yellow-800',
+      [SHARE_STATUS.ACCEPTED]: 'bg-green-100 text-green-800',
+      [SHARE_STATUS.DECLINED]: 'bg-red-100 text-red-800'
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status] || styles.pending}`}>
-        {labels[status] || status}
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status] || styles[SHARE_STATUS.PENDING]}`}>
+        {SHARE_STATUS_LABELS[status] || status}
       </span>
     );
   };
@@ -97,14 +88,12 @@ export const SharedPlaylistsTab = () => {
     );
   }
 
-  // 대기 중인 공유만 필터링
-  const pendingShares = sharedPlaylists.filter(p => p.status === 'pending');
-  const acceptedShares = sharedPlaylists.filter(p => p.status === 'accepted');
-  const declinedShares = sharedPlaylists.filter(p => p.status === 'declined');
+  const pendingShares = sharedPlaylists.filter(p => p.status === SHARE_STATUS.PENDING);
+  const acceptedShares = sharedPlaylists.filter(p => p.status === SHARE_STATUS.ACCEPTED);
+  const declinedShares = sharedPlaylists.filter(p => p.status === SHARE_STATUS.DECLINED);
 
   return (
     <div className="space-y-6">
-      {/* 대기 중인 공유 */}
       {pendingShares.length > 0 && (
         <div>
           <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -164,7 +153,6 @@ export const SharedPlaylistsTab = () => {
         </div>
       )}
 
-      {/* 수락된 공유 */}
       {acceptedShares.length > 0 && (
         <div>
           <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -202,7 +190,6 @@ export const SharedPlaylistsTab = () => {
         </div>
       )}
 
-      {/* 거절된 공유 히스토리 */}
       {declinedShares.length > 0 && (
         <div>
           <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -231,14 +218,13 @@ export const SharedPlaylistsTab = () => {
         </div>
       )}
 
-      {/* 빈 상태 */}
-      {sharedPlaylists.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <i className="ri-inbox-line text-5xl mb-3 text-gray-300"></i>
-          <p className="font-medium">받은 공유가 없습니다</p>
-          <p className="text-sm mt-1">다른 사람이 플레이리스트를 공유하면 여기에 표시됩니다.</p>
-        </div>
-      )}
+              {sharedPlaylists.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <i className="ri-inbox-line text-5xl mb-3 text-gray-300"></i>
+                  <p className="font-medium">{MESSAGES.SHARED.NO_SHARES}</p>
+                  <p className="text-sm mt-1">{MESSAGES.SHARED.NO_SHARES_DESC}</p>
+                </div>
+              )}
     </div>
   );
 };

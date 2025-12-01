@@ -39,3 +39,40 @@ export const parseSharedUrl = (): { videoId: string; tags: Tag[] } | null => {
     return null;
   }
 };
+
+export const groupTagsByVideo = (tags: Tag[]): Record<string, { videoId: string; videoTitle: string; tags: Tag[] }> => {
+  return tags.reduce((acc, tag) => {
+    const videoKey = tag.videoId || 'unknown';
+    if (!acc[videoKey]) {
+      acc[videoKey] = {
+        videoId: tag.videoId,
+        videoTitle: tag.videoTitle || '제목 없음',
+        tags: []
+      };
+    }
+    acc[videoKey].tags.push(tag);
+    return acc;
+  }, {} as Record<string, { videoId: string; videoTitle: string; tags: Tag[] }>);
+};
+
+export type Playlist = {
+  id: string;
+  name: string;
+  rating?: number;
+  createdAt: string;
+  tags: Tag[];
+};
+
+export const sortPlaylists = (playlists: Playlist[], sortBy: 'rating' | 'date' | 'name'): Playlist[] => {
+  const sorted = [...playlists];
+  switch (sortBy) {
+    case 'rating':
+      return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    case 'date':
+      return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    case 'name':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    default:
+      return sorted;
+  }
+};

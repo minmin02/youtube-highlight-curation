@@ -1,8 +1,8 @@
-// src/components/feature/AuthModal.jsx
 import { useState } from 'react';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { Button } from '../base/Button';
 import { Input } from '../base/Input';
+import { MESSAGES } from '../../constants';
 
 export function AuthModal({ isOpen, onClose }) {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -25,7 +25,7 @@ export function AuthModal({ isOpen, onClose }) {
       }
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || (isSignUp ? MESSAGES.AUTH.SIGNUP_ERROR : MESSAGES.AUTH.LOGIN_ERROR));
     }
   };
 

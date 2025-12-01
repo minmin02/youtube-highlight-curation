@@ -1,4 +1,3 @@
-// src/pages/home/HomePage.jsx
 import { useState, useEffect } from 'react';
 import { useVideoStore } from '../../stores/useVideoStore';
 import { useAuthStore } from '../../stores/useAuthStore';
@@ -9,14 +8,15 @@ import { AuthModal } from '../../components/feature/AuthModal';
 import YouTubeBrowser from '../../components/feature/YouTubeBrowser';
 import { Button } from '../../components/base/Button';
 import { Input } from '../../components/base/Input';
-import { extractVideoId } from '../../utils/urlUtils';
+import { extractVideoId, sortPlaylists } from '../../utils/urlUtils';
 import ThemeDropdown from '../../components/ThemeDropdown';
+import { SORT_OPTIONS, MESSAGES } from '../../constants';
 
 export default function HomePage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [playlistSortBy, setPlaylistSortBy] = useState('rating');
+  const [playlistSortBy, setPlaylistSortBy] = useState(SORT_OPTIONS.RATING);
   const { currentVideoId, setVideoId, playlists, setCurrentPlaylist, updatePlaylistRating } = useVideoStore();
   const { user, loading, initAuth, logout } = useAuthStore();
 
@@ -45,16 +45,16 @@ export default function HomePage() {
     if (urlError) setUrlError('');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-color)] flex items-center justify-center transition-colors duration-300">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
+          if (loading) {
+            return (
+              <div className="min-h-screen bg-[var(--bg-color)] flex items-center justify-center transition-colors duration-300">
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600">{MESSAGES.COMMON.LOADING}</p>
+                </div>
+              </div>
+            );
+          }
 
   return (
     <div className="min-h-screen bg-[var(--bg-color)] transition-colors duration-300">
@@ -99,8 +99,6 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!currentVideoId ? (
           <div className="grid grid-cols-1 gap-8">
-
-            {/* 왼쪽: 플레이리스트 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -122,19 +120,7 @@ export default function HomePage() {
 
               {playlists.length > 0 ? (
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                  {playlists
-                    .sort((a, b) => {
-                      switch (playlistSortBy) {
-                        case 'rating':
-                          return (b.rating || 0) - (a.rating || 0);
-                        case 'date':
-                          return new Date(b.createdAt) - new Date(a.createdAt);
-                        case 'name':
-                          return a.name.localeCompare(b.name);
-                        default:
-                          return 0;
-                      }
-                    })
+                  {sortPlaylists(playlists, playlistSortBy)
                     .map((playlist) => (
                       <div
                         key={playlist.id}
@@ -167,7 +153,6 @@ export default function HomePage() {
                           </div>
                         </div>
 
-                        {/* 별점 */}
                         <div className="flex items-center gap-1 mb-3" onClick={(e) => e.stopPropagation()}>
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -188,7 +173,6 @@ export default function HomePage() {
                           )}
                         </div>
 
-                        {/* 태그 미리보기 */}
                         <div className="flex gap-2">
                           {playlist.tags.slice(0, 3).map((tag, idx) => {
                             const mins = Math.floor(tag.timestamp / 60);
@@ -222,7 +206,6 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* 오른쪽: 유튜브 브라우저 + URL 입력 */}
             <div>
               <div style={{ height: '600px' }}>
                 <YouTubeBrowser 
@@ -256,7 +239,6 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* 왼쪽: 영상 플레이어 */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -272,7 +254,6 @@ export default function HomePage() {
               <PlaylistManager />
             </div>
 
-            {/* 오른쪽: 태그 리스트 */}
             <div className="lg:col-span-1">
               <TagList />
             </div>

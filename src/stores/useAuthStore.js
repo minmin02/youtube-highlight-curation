@@ -1,4 +1,3 @@
-// src/stores/useAuthStore.js
 import { create } from 'zustand';
 import { 
   createUserWithEmailAndPassword, 

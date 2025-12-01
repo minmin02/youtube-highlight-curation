@@ -1,13 +1,6 @@
-// YouTube Data API v3 유틸리티
-
-// API 키: 환경 변수 또는 직접 설정
-// 배포 시 Google Cloud Console에서 HTTP referrer 제한을 설정하세요
 const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyAOe0F23R-2Bo-FNow2cpVwEXmYX2zI4nw';
 const YOUTUBE_API_BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
-/**
- * YouTube 영상 검색
- */
 export const searchVideos = async (query, maxResults = 10) => {
   if (!YOUTUBE_API_KEY) {
     throw new Error('YouTube API 키가 설정되지 않았습니다. .env 파일에 VITE_YOUTUBE_API_KEY를 추가하세요.');
@@ -43,9 +36,6 @@ export const searchVideos = async (query, maxResults = 10) => {
   }
 };
 
-/**
- * 인기 영상 가져오기
- */
 export const getTrendingVideos = async (maxResults = 10, regionCode = 'KR') => {
   if (!YOUTUBE_API_KEY) {
     throw new Error('YouTube API 키가 설정되지 않았습니다. .env 파일에 VITE_YOUTUBE_API_KEY를 추가하세요.');
@@ -68,7 +58,6 @@ export const getTrendingVideos = async (maxResults = 10, regionCode = 'KR') => {
 
     const data = await response.json();
     return data.items.map(item => {
-      // 재생 시간 포맷팅 (PT4M13S -> 4:13)
       const duration = item.contentDetails?.duration || '';
       const durationFormatted = formatDuration(duration);
 
@@ -88,9 +77,6 @@ export const getTrendingVideos = async (maxResults = 10, regionCode = 'KR') => {
   }
 };
 
-/**
- * 영상 상세 정보 가져오기
- */
 export const getVideoDetails = async (videoId) => {
   if (!YOUTUBE_API_KEY) {
     throw new Error('YouTube API 키가 설정되지 않았습니다.');
@@ -129,10 +115,6 @@ export const getVideoDetails = async (videoId) => {
   }
 };
 
-/**
- * ISO 8601 duration 포맷을 MM:SS로 변환
- * 예: PT4M13S -> 4:13
- */
 function formatDuration(duration) {
   if (!duration) return '0:00';
   
@@ -149,10 +131,6 @@ function formatDuration(duration) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-/**
- * 조회수 포맷팅
- * 예: 1234567 -> 1.2M views
- */
 function formatViews(views) {
   const num = parseInt(views);
   if (num >= 1000000000) {

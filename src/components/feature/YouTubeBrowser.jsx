@@ -9,7 +9,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
   const [activeTab, setActiveTab] = useState('trending'); // trending, search
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
 
-  // 인기 영상 로드
   useEffect(() => {
     const loadTrendingVideos = async () => {
       if (activeTab !== 'trending') return;
@@ -26,7 +25,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         } else {
           setError(err.message);
         }
-        // API 키가 없으면 샘플 데이터 표시
         setVideos(getSampleVideos());
       } finally {
         setLoading(false);
@@ -36,7 +34,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
     loadTrendingVideos();
   }, [activeTab]);
 
-  // 샘플 데이터 (API 키가 없을 때 사용)
   const getSampleVideos = () => [
     {
       id: 'dQw4w9WgXcQ',
@@ -90,7 +87,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
 
     try {
       const results = await searchVideos(searchQuery, 10);
-      // 검색 결과에 조회수와 재생 시간 정보 추가 (별도 API 호출 필요하지만 여기서는 기본값 사용)
       const videosWithDetails = results.map(video => ({
         ...video,
         views: '조회수 정보 없음',
@@ -121,7 +117,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
-      {/* 헤더 */}
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-6 bg-red-600 rounded flex items-center justify-center">
@@ -138,7 +133,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         </button>
       </div>
 
-      {/* 검색 바 */}
       <div className="px-4 py-4 border-b border-gray-200 bg-white">
         <form onSubmit={handleSearch} className="flex items-center gap-2">
           <input
@@ -162,7 +156,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         </form>
       </div>
 
-      {/* 탭 */}
       <div className="flex border-b border-gray-200 bg-white">
         <button
           onClick={() => setActiveTab('trending')}
@@ -186,7 +179,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         )}
       </div>
 
-      {/* API 키 안내 */}
       {apiKeyMissing && (
         <div className="mx-4 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-start space-x-2">
@@ -210,7 +202,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         </div>
       )}
 
-      {/* 에러 메시지 */}
       {error && (
         <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-center space-x-2">
@@ -220,7 +211,6 @@ const YouTubeBrowser = ({ onVideoSelect }) => {
         </div>
       )}
 
-      {/* 영상 목록 */}
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-4">
           {activeTab === 'search' && searchQuery && (

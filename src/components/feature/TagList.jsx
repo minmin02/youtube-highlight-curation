@@ -1,21 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import useVideoStore from '../../stores/useVideoStore';
+import { formatTime, groupTagsByVideo } from '../../utils/urlUtils';
+import { MESSAGES } from '../../constants';
 
 const TagList = () => {
   const { tags, player, updateTag, deleteTag, setCurrentVideo } = useVideoStore();
   const [editingTag, setEditingTag] = useState(null);
   const [editForm, setEditForm] = useState({ title: '', memo: '' });
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleTagClick = (tag) => {
     if (!player) return;
     
-    // 현재 영상과 다른 영상의 태그라면 영상 변경
     const currentVideoId = player.getVideoData()?.video_id;
     if (tag.videoId !== currentVideoId) {
       setCurrentVideo(tag.videoId, tag.videoTitle);
@@ -47,24 +42,15 @@ const TagList = () => {
   };
 
   const handleDelete = (tagId) => {
-    if (window.confirm('이 태그를 삭제하시겠습니까?')) {
+    if (window.confirm(MESSAGES.TAG.DELETE_CONFIRM)) {
       deleteTag(tagId);
     }
   };
 
-  // 영상별로 태그 그룹화
-  const tagsByVideo = tags.reduce((acc, tag) => {
-    const videoKey = tag.videoId || 'unknown';
-    if (!acc[videoKey]) {
-      acc[videoKey] = {
-        videoId: tag.videoId,
-        videoTitle: tag.videoTitle || '제목 없음',
-        tags: []
-      };
-    }
-    acc[videoKey].tags.push(tag);
-    return acc;
-  }, {});
+  const tagsByVideo = useMemo(
+    () => groupTagsByVideo(tags),
+    [tags]
+  );
 
   if (tags.length === 0) {
     return (

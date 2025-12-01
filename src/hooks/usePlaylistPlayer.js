@@ -26,11 +26,8 @@ const usePlaylistPlayer = () => {
     const tag = currentPlaylist.tags[index];
     setCurrentIndex(index);
     setCurrentItem(tag);
-    
-    // 영상 변경
     setCurrentVideo(tag.videoId, tag.videoTitle || '');
     
-    // 플레이어가 준비되면 해당 시간으로 이동
     setTimeout(() => {
       if (player && player.seekTo) {
         player.seekTo(tag.timestamp, true);

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import YouTube from 'react-youtube';
 import useVideoStore from '../../stores/useVideoStore';
 import { Modal } from '../base/Modal';
+import { formatTime, extractVideoId } from '../../utils/urlUtils';
+import { MESSAGES } from '../../constants';
 
 const VideoPlayer = () => {
   const [videoUrl, setVideoUrl] = useState('');
@@ -24,19 +26,12 @@ const VideoPlayer = () => {
     player,
   } = useVideoStore();
 
-  const extractVideoId = (url) => {
-    const regex =
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
-  };
-
   const handleLoadVideo = () => {
     const videoId = extractVideoId(videoUrl);
     if (videoId) {
       setCurrentVideo(videoId, '');
     } else {
-      alert('올바른 YouTube URL을 입력하세요.');
+      alert(MESSAGES.VIDEO.LOAD_ERROR);
     }
   };
 
@@ -44,7 +39,6 @@ const VideoPlayer = () => {
     const playerInstance = event.target;
     setPlayer(playerInstance);
 
-    // 영상 제목 가져오기
     const videoData = playerInstance.getVideoData();
     if (videoData && videoData.title) {
       setCurrentVideo(currentVideoId, videoData.title);
@@ -53,7 +47,7 @@ const VideoPlayer = () => {
 
   const handleAddTag = () => {
     if (!player) {
-      alert('먼저 영상을 로드해주세요.');
+      alert(MESSAGES.VIDEO.LOAD_REQUIRED);
       return;
     }
 
@@ -73,7 +67,7 @@ const VideoPlayer = () => {
 
   const handleTagFormSubmit = () => {
     if (!tagForm.title.trim()) {
-      alert('태그 제목을 입력해주세요.');
+      alert(MESSAGES.TAG.TITLE_REQUIRED);
       return;
     }
 
@@ -83,7 +77,7 @@ const VideoPlayer = () => {
     const duration = parseInt(tagForm.duration) || 10;
 
     if (totalSeconds < 0) {
-      alert('올바른 시간을 입력해주세요.');
+      alert(MESSAGES.VIDEO.LOAD_ERROR);
       return;
     }
 
@@ -117,12 +111,6 @@ const VideoPlayer = () => {
       minutes: currentMinutes.toString(),
       seconds: currentSeconds.toString()
     }));
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const opts = {
@@ -200,7 +188,6 @@ const VideoPlayer = () => {
         )}
       </div>
 
-      {/* 태그 추가 모달 */}
       <Modal
         isOpen={showTagModal}
         onClose={() => setShowTagModal(false)}

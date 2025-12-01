@@ -28,12 +28,7 @@ export default function SharePage() {
 
         const parsedTags = JSON.parse(tagsParam);
         
-        // 비디오 ID 설정
         setVideoId(videoId);
-        
-        // 태그 데이터 복원 (실제로는 Zustand store에 직접 설정해야 함)
-        // 여기서는 간단히 처리하지만, 실제로는 store에 태그를 추가하는 액션이 필요
-        
         setIsLoading(false);
       } catch (err) {
         setError('공유 데이터를 불러오는 중 오류가 발생했습니다.');
@@ -77,7 +72,6 @@ export default function SharePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -110,20 +104,17 @@ export default function SharePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 비디오 플레이어 */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">YouTube 플레이어</h2>
             {videoId && <VideoPlayer videoId={videoId} />}
           </div>
 
-          {/* 플레이리스트 */}
           <div>
             <PlaylistManager />
           </div>
         </div>
       </div>
 
-      {/* 푸터 */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">

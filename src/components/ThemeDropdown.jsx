@@ -1,4 +1,3 @@
-// src/components/ThemeDropdown.jsx
 import { useState } from 'react';
 import { useThemeStore } from '../stores/themeStore';
 
